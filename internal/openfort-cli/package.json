@@ -1,0 +1,27 @@
+{
+  "name": "@openfort/openfort-cli",
+  "packageManager": "yarn@4.4.1",
+  "scripts": {
+    "start": "rollup -c -w",
+    "dev": "rollup -c -w",
+    "clean": "rimraf dist",
+    "build": "yarn clean && rollup -c",
+    "lint": "eslint src --ext .ts"
+  },
+  "bin": "index.js",
+  "dependencies": {
+    "@clack/prompts": "^0.10.0",
+    "@types/cross-spawn": "^6.0.6",
+    "cross-spawn": "^7.0.6",
+    "mri": "^1.2.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  },
+  "exports": {
+    "import": "./dist/index.mjs",
+    "types": "./dist/index.d.ts"
+  },
+  "types": "dist/index.d.ts"
+}

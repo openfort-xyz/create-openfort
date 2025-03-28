@@ -1,4 +1,32 @@
 {
   "name": "openfort-create",
+  "version": "0.0.0",
+  "description": "A CLI tool to create a new OpenFort project",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "internal/*"
+  ],
+  "scripts": {
+    "dev:cli": "yarn workspace @openfort/openfort-cli run dev",
+    "dev:kit": "yarn workspace create-openfortkit run dev",
+    "dev:template": "yarn workspace @openfort/template-transformer run dev",
+    "build:cli": "yarn workspace @openfort/openfort-cli run build",
+    "build:kit": "yarn workspace create-openfortkit run build",
+    "build:template": "yarn workspace @openfort/template-transformer run build",
+    "test:kit": "yarn workspace create-openfortkit run test"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^13.1.3",
+    "rimraf": "^6.0.1",
+    "rollup": "^2.67.1",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-typescript2": "^0.34.0",
+    "rollup-plugin-visualizer": "^5.5.4",
+    "tslib": "^1.9.3",
+    "typescript": "^5.0.4"
+  },
   "packageManager": "yarn@4.4.1"
 }

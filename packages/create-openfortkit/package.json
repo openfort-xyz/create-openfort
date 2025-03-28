@@ -1,0 +1,45 @@
+{
+  "name": "create-openfortkit",
+  "version": "0.0.1",
+  "type": "module",
+  "license": "MIT",
+  "author": "Openfort (https://www.openfort.xyz)",
+  "bin": "index.js",
+  "files": [
+    "index.js",
+    "template-*",
+    "dist"
+  ],
+  "scripts": {
+    "dev": "unbuild --watch",
+    "test": "node index.js",
+    "build": "unbuild",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": "^18.0.0 || ^20.0.0 || >=22.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vitejs/vite.git",
+    "directory": "packages/create-vite"
+  },
+  "bugs": {
+    "url": "https://github.com/vitejs/vite/issues"
+  },
+  "homepage": "https://github.com/vitejs/vite/tree/main/packages/create-vite#readme",
+  "funding": "https://github.com/vitejs/vite?sponsor=1",
+  "devDependencies": {
+    "@openfort/openfort-cli": "workspace:internal/openfort-cli",
+    "@openfort/openfort-kit": "^0.0.7",
+    "@openfort/template-transformer": "workspace:internal/template-transformer",
+    "@tanstack/react-query": "^5.69.0",
+    "mri": "^1.2.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "typescript": "^5.0.4",
+    "unbuild": "^3.5.0",
+    "viem": "^2.23.2",
+    "wagmi": "^2.14.11"
+  }
+}
