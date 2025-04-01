@@ -1,23 +1,7 @@
-import { cancel, editFile, FileManager, formatTargetDir, pkgFromUserAgent, prompts, promptTemplate } from '@openfort/openfort-cli'
+import { cancel, FileManager, formatTargetDir, prompts, promptTemplate } from '@openfort/openfort-cli'
 import { AuthProvider, OpenfortWalletConfig, RecoveryMethod, Theme } from '@openfort/openfort-kit'
 import { TemplateTransformer } from "@openfort/template-transformer"
 import mri from 'mri'
-import path from 'node:path'
-import colors from 'picocolors'
-
-const {
-  blue,
-  blueBright,
-  cyan,
-  green,
-  greenBright,
-  magenta,
-  red,
-  redBright,
-  reset,
-
-  yellow,
-} = colors
 
 const argv = mri<{
   template?: string
@@ -43,22 +27,8 @@ const argv = mri<{
 const helpMessage = `\
 Usage: create-openfort [OPTION]... [DIRECTORY]
 
-Create a new Vite project in JavaScript or TypeScript.
+Create a new Openfortkit project in TypeScript.
 With no arguments, start the CLI in interactive mode.
-
-Options:
-  -t, --template NAME        use a specific template
-
-Available templates:
-${yellow('vanilla-ts     vanilla')}
-${green('vue-ts         vue')}
-${cyan('react-ts       react')}
-${cyan('react-swc-ts   react-swc')}
-${magenta('preact-ts      preact')}
-${redBright('lit-ts         lit')}
-${red('svelte-ts      svelte')}
-${blue('solid-ts       solid')}
-${blueBright('qwik-ts        qwik')}
 `
 type FileSrc = {
   providers: string

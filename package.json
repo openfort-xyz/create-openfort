@@ -14,7 +14,9 @@
     "build:cli": "yarn workspace @openfort/openfort-cli run build",
     "build:kit": "yarn workspace create-openfortkit run build",
     "build:template": "yarn workspace @openfort/template-transformer run build",
-    "test:kit": "yarn workspace create-openfortkit run test"
+    "test:kit": "yarn workspace create-openfortkit run test",
+    "build": "yarn workspaces foreach -A run build",
+    "lint": "yarn workspaces foreach -A run lint"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.3",

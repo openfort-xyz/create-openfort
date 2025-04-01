@@ -6,7 +6,7 @@
     "dev": "rollup -c -w",
     "clean": "rimraf dist",
     "build": "yarn clean && rollup -c",
-    "lint": "eslint src --ext .ts"
+    "lint": "tsc --noEmit"
   },
   "bin": "index.js",
   "devDependencies": {
