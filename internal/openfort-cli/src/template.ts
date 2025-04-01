@@ -22,11 +22,11 @@ export const FRAMEWORKS: Framework[] = [
     display: 'Next.js',
     color: green,
   },
-  {
-    name: 'cra',
-    display: 'Create react app',
-    color: yellow,
-  },
+  // {
+  //   name: 'cra',
+  //   display: 'Create react app',
+  //   color: yellow,
+  // },
 ]
 export const DEFAULT_AVAILABLE_TEMPLATES = FRAMEWORKS.map(f => f.name)
 

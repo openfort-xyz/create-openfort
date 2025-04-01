@@ -310,16 +310,23 @@ ${JSON.stringify(body, null, 2)}
 
   const env: Record<string, string | undefined> = {}
 
+  const uuidV4Pattern = "[\\da-f]{8}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{12}";
+  const keyPattern = `(test|live)_${uuidV4Pattern}`;
+  const skRegex = new RegExp(`^sk_${keyPattern}$`);
+  const pkRegex = new RegExp(`^pk_${keyPattern}$`);
+  const uuidV4Regex = new RegExp(`^${uuidV4Pattern}$`);
 
   // Input Keys
   const publishableKey = await prompts.text({
     message: 'Openfort Publishable Key:',
     placeholder: 'pk...',
-    // validate: (value) => {
-    //   if (!value) {
-    //     return 'Openfort Publishable Key is required'
-    //   }
-    // }
+    validate: (value) => {
+      if (!value) {
+        return 'Openfort Publishable Key is required'
+      } else if (!pkRegex.test(value)) {
+        return 'Openfort Publishable Key is invalid'
+      }
+    }
   })
   if (prompts.isCancel(publishableKey)) return cancel()
   env.OPENFORT_PUBLISHABLE_KEY = publishableKey;
@@ -328,6 +335,13 @@ ${JSON.stringify(body, null, 2)}
     const openfortSecretResult = await prompts.text({
       message: 'Openfort Secret:',
       placeholder: 'sk_...',
+      validate: (value) => {
+        if (!value) {
+          return 'Openfort Secret Key is required'
+        } else if (!skRegex.test(value)) {
+          return 'Openfort Secret Key is invalid'
+        }
+      }
     })
     if (prompts.isCancel(openfortSecretResult)) return cancel()
     openfortSecret = openfortSecretResult
@@ -339,6 +353,13 @@ ${JSON.stringify(body, null, 2)}
     const result = await prompts.text({
       message: 'Shield Publishable Key:',
       placeholder: 'Your Shield Publishable Key',
+      validate: (value) => {
+        if (!value) {
+          return 'Shield Publishable Key is required'
+        } else if (!uuidV4Regex.test(value)) {
+          return 'Shield Publishable Key is invalid'
+        }
+      }
     })
     if (prompts.isCancel(result)) return cancel()
     shieldPublishableKey = result
@@ -352,6 +373,13 @@ ${JSON.stringify(body, null, 2)}
     const shieldSecretResult = await prompts.text({
       message: 'Shield Secret:',
       placeholder: 'Your Shield Secret',
+      validate: (value) => {
+        if (!value) {
+          return 'Shield Secret Key is required'
+        } else if (!uuidV4Regex.test(value)) {
+          return 'Shield Secret Key is invalid'
+        }
+      }
     })
     if (prompts.isCancel(shieldSecretResult)) return cancel()
     shieldSecret = shieldSecretResult
@@ -361,6 +389,13 @@ ${JSON.stringify(body, null, 2)}
     const shieldEncryptionShareResult = await prompts.text({
       message: 'Shield Encryption Share:',
       placeholder: 'Your Shield Encryption Share',
+      validate: (value) => {
+        if (!value) {
+          return 'Shield Encryption Share is required'
+        } else if (value.length !== 44) {
+          return 'Shield Encryption Share is invalid'
+        }
+      }
     })
     if (prompts.isCancel(shieldEncryptionShareResult)) return cancel()
     shieldEncryptionShare = shieldEncryptionShareResult
