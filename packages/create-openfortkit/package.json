@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "dev": "unbuild --watch",
-    "test": "node index.js",
+    "test": "node index.js --verbose",
     "build": "unbuild",
     "typecheck": "tsc --noEmit"
   },
@@ -31,7 +31,7 @@
   "funding": "https://github.com/vitejs/vite?sponsor=1",
   "devDependencies": {
     "@openfort/openfort-cli": "workspace:internal/openfort-cli",
-    "@openfort/openfort-kit": "^0.0.7",
+    "@openfort/openfort-kit": "^0.0.9",
     "@openfort/template-transformer": "workspace:internal/template-transformer",
     "@tanstack/react-query": "^5.69.0",
     "mri": "^1.2.0",

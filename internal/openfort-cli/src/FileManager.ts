@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { prompts } from './prompts';
-import { cancel } from "./utils";
+import { cancel, getFullCustomCommand, pkgFromUserAgent, PkgInfo } from "./utils";
+import { spawn } from 'node:child_process';
 
 function isValidPackageName(projectName: string) {
   return /^(?:@[a-z\d\-*~][a-z\d\-*._~]*\/)?[a-z\d\-~][a-z\d\-._~]*$/.test(
@@ -35,21 +36,25 @@ function emptyDir(dir: string) {
   }
 }
 
-export function copyDir(srcDir: string, destDir: string) {
-  fs.mkdirSync(destDir, { recursive: true })
+export function copyDir(srcDir: string, destDir: string, ignoreFiles: string[] = []) {
+  fs.mkdirSync(destDir, { recursive: true });
   for (const file of fs.readdirSync(srcDir)) {
-    const srcFile = path.resolve(srcDir, file)
-    const destFile = path.resolve(destDir, file)
-    copy(srcFile, destFile)
+    const srcFile = path.resolve(srcDir, file);
+    const destFile = path.resolve(destDir, file);
+
+    copy(srcFile, destFile, ignoreFiles);
   }
 }
 
-export function copy(src: string, dest: string) {
-  const stat = fs.statSync(src)
+export function copy(src: string, dest: string, ignoreFiles: string[] = []) {
+  if (ignoreFiles.some(ignore => ignore === src)) {
+    return;
+  }
+  const stat = fs.statSync(src);
   if (stat.isDirectory()) {
-    copyDir(src, dest)
+    copyDir(src, dest, ignoreFiles);
   } else {
-    fs.copyFileSync(src, dest)
+    fs.copyFileSync(src, dest);
   }
 }
 
@@ -67,9 +72,19 @@ export class FileManager {
   cwd: string = process.cwd();
   targetDir?: string;
   packageName?: string;
-  // templateDir?: string;
+  hasBackend: boolean = false;
+  verbose: boolean;
+  pkgInfo?: PkgInfo
+  pkgManager: string = 'npm'
 
-  constructor() {
+  constructor({ verbose }: { verbose?: boolean } = {}) {
+
+    this.pkgInfo = pkgFromUserAgent()
+    this.pkgManager = this.pkgInfo?.name ?? 'npm'
+    this.verbose = !!verbose
+
+    if (verbose)
+      prompts.log.info(`Using ${this.pkgInfo?.name ?? 'npm'} ${this.pkgInfo?.version ?? ''}`)
 
   }
 
@@ -128,8 +143,7 @@ export class FileManager {
           emptyDir(this.targetDir)
           break
         case 'no':
-          cancel()
-          return
+          return cancel()
       }
     }
 
@@ -153,10 +167,146 @@ export class FileManager {
       else
         packageName = packageNameResult
     }
+    this.packageName = packageName
 
     this.root = path.join(this.cwd, this.targetDir)
     fs.mkdirSync(this.root, { recursive: true })
+
+    return this;
   }
 
+  isInitialized() {
+    return !!this.root
+  }
 
+  getFilePath(file: string) {
+    if (!this.root) {
+      throw new Error('FileManager not initialized')
+    }
+    const targetPath = path.join(this.root, this.hasBackend ? "frontend" : "", file)
+    return targetPath
+  }
+
+  write(file: string, content: string) {
+    if (!this.root) {
+      throw new Error('FileManager not initialized')
+    }
+    const targetPath = this.getFilePath(file)
+
+    if (content !== undefined) {
+      fs.writeFileSync(targetPath, content)
+    }
+  }
+
+  read(file: string) {
+    if (!this.root) {
+      throw new Error('FileManager not initialized')
+    }
+    const targetPath = this.getFilePath(file)
+
+    return fs.readFileSync(targetPath, 'utf-8').toString();
+  }
+
+  async createBackend({
+    openfortSecretKey,
+    shieldSecretKey,
+    shieldApiKey,
+    shieldEncryptionShare,
+    port
+  }: {
+    openfortSecretKey: string
+    shieldSecretKey: string
+    shieldApiKey: string
+    shieldEncryptionShare: string
+    port: number
+  }) {
+    if (!this.root) {
+      throw new Error('FileManager not initialized')
+    }
+
+    this.hasBackend = true;
+
+    const spinner = prompts.spinner()
+    spinner.start('Creating backend...')
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const child = spawn('npx', ['degit', 'openfort-xyz/auth-sample-backend', 'backend'], {
+          cwd: this.root,
+          shell: true,
+        });
+
+        child.on('close', (code) => {
+          if (code === 0) {
+            resolve(); // Process completed successfully
+          } else {
+            reject(new Error(`Process exited with code ${code}`));
+          }
+        });
+
+        child.on('error', (err) => {
+          reject(err); // Handle errors
+        });
+      });
+
+      // Copy the .env file
+      const envPath = path.join(this.root, "backend", ".env.example");
+      const targetPath = path.join(this.root, "backend", ".env");
+
+      // Read line by line and replace the variables
+      const envContent = fs.readFileSync(envPath, 'utf-8').toString();
+      const updatedEnvContent = envContent
+        .replace(/OPENFORT_SECRET_KEY=/g, `OPENFORT_SECRET_KEY=${openfortSecretKey}`)
+        .replace(/SHIELD_SECRET_KEY=/g, `SHIELD_SECRET_KEY=${shieldSecretKey}`)
+        .replace(/SHIELD_API_KEY=/g, `SHIELD_API_KEY=${shieldApiKey}`)
+        .replace(/SHIELD_ENCRYPTION_SHARE=/g, `SHIELD_ENCRYPTION_SHARE=${shieldEncryptionShare}`)
+        .replace(/PORT=/g, `PORT=${port}`)
+
+      fs.writeFileSync(targetPath, updatedEnvContent);
+
+      spinner.stop('Backend creation completed successfully! 🚀');
+    } catch (error) {
+      spinner.stop('Failed to create backend: ' + JSON.stringify(error));
+    }
+  }
+
+  editFile(file: string, callback: (content: string) => string) {
+    if (!this.root) {
+      throw new Error('FileManager not initialized')
+    }
+    const targetPath = this.getFilePath(file)
+    editFile(targetPath, callback)
+  }
+
+  outro() {
+    let doneMessage = ''
+    const cdProjectName = path.relative(this.cwd, this.root!)
+    doneMessage += `Done. Now run:\n`
+    if (this.root !== this.cwd) {
+      doneMessage += `\n  cd ${cdProjectName.includes(' ') ? `"${cdProjectName}"` : cdProjectName}`
+    }
+
+    const addRunToMessage = () => {
+      switch (this.pkgManager) {
+        case 'yarn':
+          doneMessage += '\n  yarn'
+          doneMessage += '\n  yarn dev'
+          break
+        default:
+          doneMessage += `\n  ${this.pkgManager} install`
+          doneMessage += `\n  ${this.pkgManager} run dev`
+          break
+      }
+    }
+
+    if (this.hasBackend) {
+      doneMessage += '\n\nFirst run the backend project in one terminal.'
+      doneMessage += '\n  cd backend'
+      addRunToMessage()
+      doneMessage += '\n\nThen run the frontend project in another terminal.'
+      doneMessage += '\n  cd frontend'
+    }
+
+    addRunToMessage()
+    prompts.outro(doneMessage)
+  }
 }

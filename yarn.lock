@@ -1395,9 +1395,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfort/openfort-kit@npm:^0.0.7":
-  version: 0.0.7
-  resolution: "@openfort/openfort-kit@npm:0.0.7"
+"@openfort/openfort-kit@npm:^0.0.9":
+  version: 0.0.9
+  resolution: "@openfort/openfort-kit@npm:0.0.9"
   dependencies:
     "@openfort/openfort-js": "npm:^0.8.31"
     buffer: "npm:^6.0.3"
@@ -1414,7 +1414,7 @@ __metadata:
     react-dom: 17.x || 18.x
     viem: 2.x
     wagmi: 2.x
-  checksum: 10c0/c2b75b7404c984b16ca569a2866a7be1b797605ae22787c9c08fc08f4095399ba2af14874e7aedd86239b50584c696583af8d6afd791c94c85a07b7c943d6a8b
+  checksum: 10c0/066724e4f64b86fcb36274512e7a1f3073b8aa535143008a6ac8fec8822da74a445f83773ee121cfa3dc4b9cf064affd94fd68280bbe369c496b04f9fada6449
   languageName: node
   linkType: hard
 
@@ -2830,7 +2830,7 @@ __metadata:
   resolution: "create-openfortkit@workspace:packages/create-openfortkit"
   dependencies:
     "@openfort/openfort-cli": "workspace:internal/openfort-cli"
-    "@openfort/openfort-kit": "npm:^0.0.7"
+    "@openfort/openfort-kit": "npm:^0.0.9"
     "@openfort/template-transformer": "workspace:internal/template-transformer"
     "@tanstack/react-query": "npm:^5.69.0"
     mri: "npm:^1.2.0"

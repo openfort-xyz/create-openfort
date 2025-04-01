@@ -1,11 +1,9 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import colors from 'picocolors'
-import { AuthProvider, RecoveryMethod, Types } from '@openfort/openfort-kit'
-import { cancel, copy, editFile, FileManager, formatTargetDir, pkgFromUserAgent, PkgInfo, prompts, promptTemplate } from '@openfort/openfort-cli'
+import { cancel, editFile, FileManager, formatTargetDir, pkgFromUserAgent, prompts, promptTemplate } from '@openfort/openfort-cli'
+import { AuthProvider, OpenfortWalletConfig, RecoveryMethod, Theme } from '@openfort/openfort-kit'
+import { TemplateTransformer } from "@openfort/template-transformer"
 import mri from 'mri'
-import { copyTemplate } from "@openfort/template-transformer"
+import path from 'node:path'
+import colors from 'picocolors'
 
 const {
   blue,
@@ -40,7 +38,6 @@ const argv = mri<{
     'template',
   ],
 })
-const cwd = process.cwd()
 
 // prettier-ignore
 const helpMessage = `\
@@ -72,6 +69,7 @@ const renameFiles: Record<string, string | undefined> = {
 }
 
 const defaultTargetDir = 'openfortkit-project'
+const defaultApiEndpoint = 'http://localhost:3110/api/protected-create-encryption-session'
 
 async function init() {
   const argTargetDir = argv._[0]
@@ -89,25 +87,18 @@ async function init() {
 
   prompts.intro("Let's create a new Openfortkit project!")
 
-  const pkgInfo = pkgFromUserAgent()
-
-  if (verbose)
-    prompts.log.info(`Using ${pkgInfo?.name ?? 'npm'} ${pkgInfo?.version ?? ''}`)
-
-  const fileManager = new FileManager()
-  await fileManager.init({
+  const fileManager = await new FileManager().init({
     argTargetDir,
     argOverwrite,
     defaultTargetDir,
   })
-  if (!fileManager.targetDir) return;
+  if (!fileManager || !fileManager.root) return;
 
   const template = await promptTemplate({
     argTemplate,
   })
   if (!template) return;
 
-  const pkgManager = pkgInfo ? pkgInfo.name : 'npm'
 
 
   // Choose auth providers
@@ -142,11 +133,10 @@ async function init() {
     ],
     required: false,
   });
-  prompts.log.success(`Template: ${String(providers)}`)
   if (prompts.isCancel(providers)) return cancel()
 
   // Wallet Connect Project ID for Wallet provider
-  var walletConnectProjectId: string | undefined
+  let walletConnectProjectId: string | undefined
   if (providers.includes(AuthProvider.WALLET)) {
     prompts.log.info("Wallet Connect is required for the Wallet provider.\nGet your Wallet Connect Project ID from https://cloud.reown.com/.")
     const result = await prompts.text({
@@ -174,8 +164,10 @@ async function init() {
   })
   if (prompts.isCancel(createEmbeddedSigner)) return cancel()
 
-  var createBackend: boolean | undefined = false
-  var recoveryMethod: RecoveryMethod | undefined
+  let createBackend: boolean | undefined = false
+  let recoveryMethod: RecoveryMethod | undefined
+  let apiEndpoint: string = defaultApiEndpoint
+
   if (createEmbeddedSigner) {
     // Choose recovery method
     const result = await prompts.select({
@@ -201,41 +193,75 @@ async function init() {
         options: [
           {
             value: true,
-            label: 'Yes',
-            hint: 'You will need to provide an endpoint to create an encryption session',
+            label: 'No',
+            hint: 'We will create a sample backend for you',
           },
           {
             value: false,
-            label: 'No',
-            hint: 'We will create a sample backend for you',
+            label: 'Yes',
+            hint: 'You will need to provide an endpoint to create an encryption session',
           },
         ],
       })
       if (prompts.isCancel(result)) return cancel()
       createBackend = result
     }
+
+    let valid = createBackend;
+    let attempts = 0
+    while (!valid) {
+      const apiEndpointResult = await prompts.text({
+        message: attempts === 0 ?
+          'Please provide your API endpoint to create an encryption session:'
+          : 'Please provide a valid API endpoint to create an encryption session:',
+        placeholder: 'http://localhost:3110/api/protected-create-encryption-session',
+        validate: (value) => {
+          if (!value) {
+            return 'API endpoint is required'
+          }
+        }
+      })
+      if (prompts.isCancel(apiEndpointResult)) return cancel()
+      apiEndpoint = apiEndpointResult
+
+      await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+        .then((response) => response.json())
+        .then((body) => {
+          if (body.session) {
+            valid = true
+          } else {
+            prompts.log.error(`Invalid API endpoint:
+
+Response must be:
+{
+  "session": "<session>"
+}
+
+But got:
+${JSON.stringify(body, null, 2)}
+`)
+          }
+        }).catch((error) => {
+          prompts.log.error('Invalid API endpoint')
+        })
+
+      attempts++;
+    }
   }
 
   // Select theme
-  const theme = await prompts.select<Types.Theme>({
+  const theme = await prompts.select<Theme>({
     message: 'Select a theme:',
     options: [
       {
         value: 'auto',
         label: 'Default',
         hint: 'Auto'
-      },
-      {
-        value: 'web95',
-        label: 'Web95',
-      },
-      {
-        value: 'retro',
-        label: 'Retro',
-      },
-      {
-        value: 'soft',
-        label: 'Soft',
       },
       {
         value: 'midnight',
@@ -246,8 +272,20 @@ async function init() {
         label: 'Minimal',
       },
       {
+        value: 'soft',
+        label: 'Soft',
+      },
+      {
+        value: 'web95',
+        label: 'Web95',
+      },
+      {
         value: 'rounded',
-        label: colors.red('rounded'),
+        label: 'Rounded',
+      },
+      {
+        value: 'retro',
+        label: 'Retro',
       },
       {
         value: 'nouns',
@@ -259,12 +297,24 @@ async function init() {
 
   prompts.log.success('Good! You are all set.\nPlease provide the following keys to continue.\nGet your keys from https://dashboard.openfort.xyz/developers/api-keys')
 
+
+  const templateTransformer = TemplateTransformer.getTransformer(template, fileManager, verbose)
+
+  const env: Record<string, string | undefined> = {}
+
+
   // Input Keys
   const publishableKey = await prompts.text({
     message: 'Openfort Publishable Key:',
     placeholder: 'pk...',
+    // validate: (value) => {
+    //   if (!value) {
+    //     return 'Openfort Publishable Key is required'
+    //   }
+    // }
   })
   if (prompts.isCancel(publishableKey)) return cancel()
+  env.OPENFORT_PUBLISHABLE_KEY = publishableKey;
 
   const requestOpenfortSecret = async () => {
     const openfortSecretResult = await prompts.text({
@@ -275,8 +325,9 @@ async function init() {
     openfortSecret = openfortSecretResult
   }
 
-  var shieldPublishableKey: string | undefined
-  if (createEmbeddedSigner) {
+  let shieldPublishableKey: string | undefined
+
+  const requestShieldPublishable = async () => {
     const result = await prompts.text({
       message: 'Shield Publishable Key:',
       placeholder: 'Your Shield Publishable Key',
@@ -285,10 +336,9 @@ async function init() {
     shieldPublishableKey = result
   }
 
-  var shieldEncryptionShare: string | undefined
-  var shieldSecret: string | undefined
-  var openfortSecret: string | undefined
-  var apiEndpoint: string | undefined
+  let shieldEncryptionShare: string | undefined
+  let shieldSecret: string | undefined
+  let openfortSecret: string | undefined
 
   const requestShieldSecret = async () => {
     const shieldSecretResult = await prompts.text({
@@ -308,66 +358,138 @@ async function init() {
     shieldEncryptionShare = shieldEncryptionShareResult
   }
 
-  const requestApiEndpoint = async () => {
-    const apiEndpointResult = await prompts.text({
-      message: 'API Endpoint:',
-      placeholder: 'Your API Endpoint',
-      validate: (value) => {
-        if (!value) {
-          return 'API Endpoint is required'
-        }
-      }
-    })
-    if (prompts.isCancel(apiEndpointResult)) return cancel()
-    apiEndpoint = apiEndpointResult
-  }
+
+  let config: OpenfortWalletConfig | null = null
 
   if (createEmbeddedSigner) {
-
     if (recoveryMethod === RecoveryMethod.PASSWORD) {
+      await requestShieldPublishable()
       await requestShieldEncryptionShare()
-    }
 
-    if (recoveryMethod === RecoveryMethod.AUTOMATIC) {
+      if (!shieldPublishableKey || !shieldEncryptionShare) {
+        return cancel("Missing Shield Publishable Key or Shield Encryption Share")
+      }
+
+      env.SHIELD_PUBLISHABLE_KEY = shieldPublishableKey
+      env.SHIELD_ENCRYPTION_SHARE = shieldEncryptionShare
+
+      config = {
+        createEmbeddedSigner: true,
+        embeddedSignerConfiguration: {
+          shieldPublishableKey: "_ENV_.SHIELD_PUBLISHABLE_KEY",
+          recoveryMethod: recoveryMethod,
+          shieldEncryptionKey: "_ENV_.SHIELD_ENCRYPTION_SHARE",
+        }
+      }
+    } else if (recoveryMethod === RecoveryMethod.AUTOMATIC) {
       if (createBackend) {
         await requestOpenfortSecret()
+        await requestShieldPublishable()
         await requestShieldSecret()
         await requestShieldEncryptionShare()
       } else {
-        await requestApiEndpoint()
+        await requestShieldPublishable()
       }
+
+      if (!shieldPublishableKey) {
+        return cancel("Missing Shield Publishable Key")
+      }
+
+      env.SHIELD_PUBLISHABLE_KEY = shieldPublishableKey
+      env.API_ENDPOINT = apiEndpoint
+
+      config = {
+        createEmbeddedSigner: true,
+        embeddedSignerConfiguration: {
+          shieldPublishableKey: "_ENV_.SHIELD_PUBLISHABLE_KEY",
+          recoveryMethod: recoveryMethod,
+          createEncryptedSessionEndpoint: "_ENV_.API_ENDPOINT",
+        }
+      }
+    } else {
+      cancel("Invalid recovery method")
+    }
+  } else {
+    config = {
+      linkWalletOnSignUp: true,
     }
   }
 
-  // if (verbose)
-  //   prompts.log.info(`Using template: ${template} from ${fileManager.templateDir}`)
+  if (verbose)
+    prompts.log.info(`Using template: ${template}`)
 
   prompts.log.step(`Scaffolding project in ${fileManager.root}...`)
 
-  copyTemplate(template, fileManager)
+  if (createBackend) {
+    if (!openfortSecret || !shieldSecret || !shieldPublishableKey || !shieldEncryptionShare) {
+      return cancel("Missing Openfort Secret, Shield Secret, Shield Publishable Key or Shield Encryption Share")
+    }
 
-  // pkg.name = fileManager.packageName
-
-  // setupReactSwc(root, template.endsWith('-ts'))
-
-  let doneMessage = ''
-  const cdProjectName = path.relative(cwd, fileManager.root!)
-  doneMessage += `Done. Now run:\n`
-  if (fileManager.root !== cwd) {
-    doneMessage += `\n  cd ${cdProjectName.includes(' ') ? `"${cdProjectName}"` : cdProjectName
-      }`
+    await fileManager.createBackend({
+      openfortSecretKey: openfortSecret,
+      shieldSecretKey: shieldSecret,
+      shieldApiKey: shieldPublishableKey,
+      shieldEncryptionShare: shieldEncryptionShare,
+      port: 3110,
+    })
   }
-  switch (pkgManager) {
-    case 'yarn':
-      doneMessage += '\n  yarn'
-      doneMessage += '\n  yarn dev'
-      break
-    default:
-      doneMessage += `\n  ${pkgManager} install`
-      doneMessage += `\n  ${pkgManager} run dev`
-      break
+
+
+  templateTransformer.copyTemplate();
+
+  if (verbose)
+    prompts.log.info(`Template copied: ${template}`)
+
+  let configString = JSON.stringify(config, null, 2)
+
+  const match = /"_ENV_\.(.*)"/
+  let envVar = configString.match(match)
+
+  while (envVar) {
+    if (verbose)
+      prompts.log.info(`Replacing ${envVar[0]} with ${templateTransformer.getEnvName(envVar[1])}`)
+
+    configString = configString.replace(match, templateTransformer.getEnvName(envVar[1]))
+    envVar = configString.match(match)
   }
-  prompts.outro(doneMessage)
+
+  configString = configString.replace('"recoveryMethod": "automatic"', "recoveryMethod: RecoveryMethod.AUTOMATIC")
+  configString = configString.replace('"recoveryMethod": "password"', "recoveryMethod: RecoveryMethod.PASSWORD")
+
+  const providerToString = {
+    [AuthProvider.EMAIL]: 'AuthProvider.EMAIL',
+    [AuthProvider.GUEST]: 'AuthProvider.GUEST',
+    [AuthProvider.WALLET]: 'AuthProvider.WALLET',
+    [AuthProvider.FACEBOOK]: 'AuthProvider.FACEBOOK',
+    [AuthProvider.GOOGLE]: 'AuthProvider.GOOGLE',
+    [AuthProvider.TWITTER]: 'AuthProvider.TWITTER',
+  }
+
+  const providersString = "[\n  " +
+    providers.map((provider) => {
+      return providerToString[provider]
+    }).join(',\n  ')
+    + "\n]"
+
+
+  fileManager.editFile(
+    'src/providers.tsx',
+    (content) => {
+      return content
+        .replace(/WALLET_CONFIG/g, configString,)
+        .replace(/WALLET_CONNECT_PROJECT_ID/g, templateTransformer.getEnvName('WALLET_CONNECT_PROJECT_ID'))
+        .replace(/OPENFORT_PUBLISHABLE_KEY/g, templateTransformer.getEnvName('OPENFORT_PUBLISHABLE_KEY'))
+        .replace(/AUTH_PROVIDERS/g, providersString)
+        .replace(/VAR_THEME/g, theme)
+        .replace(/"([^"]+)": /g, '$1: ')
+    },
+  )
+
+  env.WALLET_CONNECT_PROJECT_ID = walletConnectProjectId
+
+  templateTransformer.addEnv(env)
+
+  fileManager.outro();
 }
 
 
