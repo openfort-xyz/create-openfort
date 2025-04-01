@@ -23,30 +23,36 @@ export class BaseTemplateTransformer {
     return this;
   }
 
-  protected getFolderDir(folder: string) {
+
+  protected getFolderDir(folder: string, addTemplate = true) {
     return path.resolve(
       fileURLToPath(import.meta.url),
       '../../../../',
       folder,
-      `template-${this.template}`,
+      addTemplate ? `template-${this.template}` : '',
     )
   }
 
-  protected copyFolder(folder: string, ignoreFiles?: string[]) {
-    const srcDir = this.getFolderDir(folder)
+  protected copyDir(srcDir: string, ignoreFiles?: string[]) {
 
     if (!fs.existsSync(srcDir)) {
-      throw new Error(`Template '${this.template}' of '${folder}' not found`);
+      if (this.verbose)
+        prompts.log.error(`Template '${this.template}' of '${srcDir}' not found`);
+      return
     }
 
     if (this.verbose) {
-      prompts.log.info(`Copying ${folder} from ${srcDir} to ${this.fileManager.root}`);
+      prompts.log.info(`Copying ${srcDir}`);
     }
 
     const files = fs.readdirSync(srcDir)
     for (const file of files) {
 
-      const targetPath = this.fileManager.getFilePath(file)
+      const targetPath = this.fileManager.getFilePath(
+        file.startsWith('_')
+          ? file.slice(1)
+          : file
+      )
       copy(path.join(srcDir, file), targetPath, ignoreFiles?.map(f => path.join(srcDir, f)))
     }
 
@@ -85,25 +91,35 @@ export class BaseTemplateTransformer {
       ...pkg.scripts,
       ...scripts,
     }
-    prompts.log.info(`------------Adding to package.json`)
+    if (this.verbose)
+      prompts.log.info(`Adding to package.json`)
+
     this.fileManager.write('package.json', JSON.stringify(pkg, null, 2) + '\n')
   }
 
-  protected copyPackageJson() {
-    const rawDir = this.getFolderDir("raw-templates")
-    const templateDir = this.getFolderDir(`updated-files/openfortkit`)
-
-    const rawPkg = JSON.parse(
-      fs.readFileSync(path.join(rawDir, `package.json`), 'utf-8'),
-    )
-    const templatePkg = JSON.parse(
-      fs.readFileSync(path.join(templateDir, `package.json`), 'utf-8'),
-    )
-
+  protected mergePackageJson(sdkFolder: string) {
     if (this.verbose)
       prompts.log.info(`Copying package.json`)
 
-    const pkg = deepMerge(rawPkg, templatePkg)
+    const rawDir = this.getFolderDir("raw-templates")
+    const rawSrcDir = path.join(rawDir, `package.json`)
+    const rawPkg = fs.existsSync(rawSrcDir) ? JSON.parse(
+      fs.readFileSync(rawSrcDir, 'utf-8'),
+    ) : {}
+
+    const templateDir = this.getFolderDir(`updated-files/${sdkFolder}`)
+    const templateSrcDir = path.join(templateDir, `package.json`)
+    const templatePkg = fs.existsSync(templateSrcDir) ? JSON.parse(
+      fs.readFileSync(templateSrcDir, 'utf-8'),
+    ) : {}
+
+    const commonDir = this.getFolderDir(`updated-files/${sdkFolder}/common`, false)
+    const commonSrcDir = path.join(commonDir, `package.json`)
+    const commonPkg = fs.existsSync(commonSrcDir) ? JSON.parse(
+      fs.readFileSync(commonSrcDir, 'utf-8'),
+    ) : {}
+
+    const pkg = deepMerge(rawPkg, deepMerge(templatePkg, commonPkg))
 
     pkg.name = this.fileManager.packageName || 'openfort-app'
 
@@ -111,10 +127,10 @@ export class BaseTemplateTransformer {
   }
 
   protected copyRaw() {
-    this.copyFolder('raw-templates')
+    this.copyDir(this.getFolderDir('raw-templates'))
   }
 
-  copyTemplate() {
+  copyTemplate(sdkFolder: string) {
     if (!this.fileManager.root) {
       throw new Error('FileManager not initialized')
     }
@@ -127,10 +143,12 @@ export class BaseTemplateTransformer {
     }
 
     this.copyRaw()
-    this.copyPackageJson()
+    this.mergePackageJson(sdkFolder)
+    // const srcDir = this.getFolderDir(folder)
 
-    this.copyFolder('updated-files/common')
-    this.copyFolder(`updated-files/openfortkit`, ['package.json'])
+    this.copyDir(this.getFolderDir('updated-files/common'))
+    this.copyDir(this.getFolderDir(`updated-files/${sdkFolder}`), ['package.json'])
+    this.copyDir(this.getFolderDir(`updated-files/${sdkFolder}/common`, false), ['package.json'])
   }
 
   addEnv(env: Record<string, string | undefined>) {

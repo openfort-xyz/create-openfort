@@ -60,12 +60,17 @@ ${red('svelte-ts      svelte')}
 ${blue('solid-ts       solid')}
 ${blueBright('qwik-ts        qwik')}
 `
+type FileSrc = {
+  providers: string
+}
 
-
-
-const renameFiles: Record<string, string | undefined> = {
-  _gitignore: '.gitignore',
-  ".env._local": ".env.local",
+const filesSrc: Record<string, FileSrc> = {
+  vite: {
+    providers: "src/providers.tsx"
+  },
+  nextjs: {
+    providers: "src/app/providers.tsx"
+  },
 }
 
 const defaultTargetDir = 'openfortkit-project'
@@ -99,7 +104,10 @@ async function init() {
   })
   if (!template) return;
 
-
+  if (!filesSrc[template]) {
+    prompts.log.error(`Template ${template} not found. This is a bug, please report it to https://openfort.io.`)
+    return cancel()
+  }
 
   // Choose auth providers
   const providers = await prompts.multiselect({
@@ -435,7 +443,7 @@ ${JSON.stringify(body, null, 2)}
   }
 
 
-  templateTransformer.copyTemplate();
+  templateTransformer.copyTemplate("openfortkit");
 
   if (verbose)
     prompts.log.info(`Template copied: ${template}`)
@@ -473,7 +481,7 @@ ${JSON.stringify(body, null, 2)}
 
 
   fileManager.editFile(
-    'src/providers.tsx',
+    filesSrc[template].providers,
     (content) => {
       return content
         .replace(/WALLET_CONFIG/g, configString,)
@@ -492,26 +500,6 @@ ${JSON.stringify(body, null, 2)}
   fileManager.outro();
 }
 
-
-
-function setupReactSwc(root: string, isTs: boolean) {
-  // renovate: datasource=npm depName=@vitejs/plugin-react-swc
-  const reactSwcPluginVersion = '3.8.0'
-
-  editFile(path.resolve(root, 'package.json'), (content) => {
-    return content.replace(
-      /"@vitejs\/plugin-react": ".+?"/,
-      `"@vitejs/plugin-react-swc": "^${reactSwcPluginVersion}"`,
-    )
-  })
-  editFile(
-    path.resolve(root, `vite.config.${isTs ? 'ts' : 'js'}`),
-    (content) => {
-      return content.replace('@vitejs/plugin-react', '@vitejs/plugin-react-swc')
-    },
-  )
-}
-
-init().catch((e) => {
-  console.error(e)
+init().catch((error) => {
+  console.error(error)
 })
