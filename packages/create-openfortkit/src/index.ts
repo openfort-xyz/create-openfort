@@ -78,7 +78,7 @@ async function init() {
     return
   }
 
-  console.log(`\n\n`)
+  console.log(`\n`)
 
   prompts.intro("Let's create a new Openfortkit project!")
 
@@ -104,7 +104,7 @@ async function init() {
 
   // Choose auth providers
   const providers = await prompts.multiselect({
-    message: 'Select additional tools. (use arrow keys / space bar)',
+    message: 'Select your auth providers. (use arrow keys / space bar)',
     initialValues: [AuthProvider.EMAIL, AuthProvider.GUEST],
     options: [
       {

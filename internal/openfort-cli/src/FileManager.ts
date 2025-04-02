@@ -280,7 +280,7 @@ export class FileManager {
   outro() {
     let doneMessage = ''
     const cdProjectName = path.relative(this.cwd, this.root!)
-    doneMessage += `Done.\nNow run:`
+    doneMessage += `Done.\n\nNow run:`
     if (this.root !== this.cwd) {
       doneMessage += `\n  cd ${cdProjectName.includes(' ') ? `"${cdProjectName}"` : cdProjectName}`
     }
