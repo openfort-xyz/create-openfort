@@ -27,7 +27,7 @@ export class BaseTemplateTransformer {
   protected getFolderDir(folder: string, addTemplate = true) {
     return path.resolve(
       fileURLToPath(import.meta.url),
-      '../../../../',
+      '../../dist',
       folder,
       addTemplate ? `template-${this.template}` : '',
     )

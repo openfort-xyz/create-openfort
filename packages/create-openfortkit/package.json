@@ -7,28 +7,17 @@
   "bin": "index.js",
   "files": [
     "index.js",
-    "template-*",
     "dist"
   ],
   "scripts": {
     "dev": "unbuild --watch",
     "test": "node index.js --verbose",
-    "build": "unbuild",
+    "build": "unbuild && node build.js",
     "lint": "tsc --noEmit"
   },
   "engines": {
     "node": "^18.0.0 || ^20.0.0 || >=22.0.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vitejs/vite.git",
-    "directory": "packages/create-vite"
-  },
-  "bugs": {
-    "url": "https://github.com/vitejs/vite/issues"
-  },
-  "homepage": "https://github.com/vitejs/vite/tree/main/packages/create-vite#readme",
-  "funding": "https://github.com/vitejs/vite?sponsor=1",
   "devDependencies": {
     "@openfort/openfort-cli": "workspace:internal/openfort-cli",
     "@openfort/openfort-kit": "^0.0.9",

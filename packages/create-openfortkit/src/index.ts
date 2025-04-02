@@ -1,13 +1,29 @@
 import { cancel, FileManager, formatTargetDir, prompts, promptTemplate } from '@openfort/openfort-cli'
-import { AuthProvider, OpenfortWalletConfig, RecoveryMethod, Theme } from '@openfort/openfort-kit'
+import { type OpenfortWalletConfig, type Theme } from '@openfort/openfort-kit'
 import { TemplateTransformer } from "@openfort/template-transformer"
 import mri from 'mri'
+
+// RecoveryMethod and AuthProvider come from @openfort/openfort-kit 
+// but if we import them we include the whole package, increasing the bundle size from ~120kb to almost 700kb
+enum RecoveryMethod {
+  PASSWORD = "password",
+  AUTOMATIC = "automatic"
+}
+enum AuthProvider {
+  GOOGLE = "google",
+  TWITTER = "twitter",
+  FACEBOOK = "facebook",
+  EMAIL = "email",
+  WALLET = "wallet",
+  GUEST = "guest"
+}
 
 const argv = mri<{
   template?: string
   overwrite?: boolean
   help?: boolean
   verbose?: boolean
+  noValidate?: boolean
 }>(process.argv.slice(2), {
   alias: {
     h: 'help',
@@ -17,6 +33,7 @@ const argv = mri<{
     'help',
     'overwrite',
     'verbose',
+    'noValidate',
   ],
   string: [
     'template',
@@ -53,6 +70,7 @@ async function init() {
   const argTemplate = argv.template
   const argOverwrite = argv.overwrite
   const verbose = argv.verbose
+  const noValidate = argv.noValidate
 
   const help = argv.help
   if (help) {
@@ -61,6 +79,9 @@ async function init() {
   }
 
   prompts.intro("Let's create a new Openfortkit project!")
+
+  if (noValidate)
+    prompts.log.warn("No validation will be performed on the input values.\nPlease make sure to provide valid values.")
 
   const fileManager = await new FileManager().init({
     argTargetDir,
@@ -194,6 +215,7 @@ async function init() {
           : 'Please provide a valid API endpoint to create an encryption session:',
         placeholder: 'http://localhost:3110/api/protected-create-encryption-session',
         validate: (value) => {
+          if (noValidate) return;
           if (!value) {
             return 'API endpoint is required'
           }
@@ -291,6 +313,7 @@ ${JSON.stringify(body, null, 2)}
     message: 'Openfort Publishable Key:',
     placeholder: 'pk...',
     validate: (value) => {
+      if (noValidate) return;
       if (!value) {
         return 'Openfort Publishable Key is required'
       } else if (!pkRegex.test(value)) {
@@ -306,6 +329,7 @@ ${JSON.stringify(body, null, 2)}
       message: 'Openfort Secret:',
       placeholder: 'sk_...',
       validate: (value) => {
+        if (noValidate) return;
         if (!value) {
           return 'Openfort Secret Key is required'
         } else if (!skRegex.test(value)) {
@@ -324,6 +348,7 @@ ${JSON.stringify(body, null, 2)}
       message: 'Shield Publishable Key:',
       placeholder: 'Your Shield Publishable Key',
       validate: (value) => {
+        if (noValidate) return;
         if (!value) {
           return 'Shield Publishable Key is required'
         } else if (!uuidV4Regex.test(value)) {
@@ -344,6 +369,7 @@ ${JSON.stringify(body, null, 2)}
       message: 'Shield Secret:',
       placeholder: 'Your Shield Secret',
       validate: (value) => {
+        if (noValidate) return;
         if (!value) {
           return 'Shield Secret Key is required'
         } else if (!uuidV4Regex.test(value)) {
@@ -360,6 +386,7 @@ ${JSON.stringify(body, null, 2)}
       message: 'Shield Encryption Share:',
       placeholder: 'Your Shield Encryption Share',
       validate: (value) => {
+        if (noValidate) return;
         if (!value) {
           return 'Shield Encryption Share is required'
         } else if (value.length !== 44) {

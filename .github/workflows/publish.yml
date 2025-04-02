@@ -12,6 +12,24 @@ jobs:
     name: Publish Workflow
     runs-on: ubuntu-latest
     steps:
+      - name: Extract Tag Name
+        id: get_tag
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Determine Package to Publish
+        id: set_package
+        run: |
+          if [[ "${TAG_NAME}" == openfortkit-v* ]]; then
+            echo "PACKAGE_DIR=packages/create-openfortkit" >> $GITHUB_ENV
+          elif [[ "${TAG_NAME}" == openfortjs-v* ]]; then
+            echo "PACKAGE_DIR=packages/create-openfort-js" >> $GITHUB_ENV
+          elif [[ "${TAG_NAME}" == openfort-v* ]]; then
+            echo "PACKAGE_DIR=packages/create-openfort" >> $GITHUB_ENV
+          else
+            echo "No matching package found for tag ${TAG_NAME}"
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
@@ -29,22 +47,6 @@ jobs:
 
       - name: Build
         run: yarn build
-
-      - name: Extract Tag Name
-        id: get_tag
-        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Determine Package to Publish
-        id: set_package
-        run: |
-          if [[ "${TAG_NAME}" == openfortkit-v* ]]; then
-            echo "PACKAGE_DIR=packages/create-openfortkit" >> $GITHUB_ENV
-          elif [[ "${TAG_NAME}" == openfortjs-v* ]]; then
-            echo "PACKAGE_DIR=packages/openfort-js" >> $GITHUB_ENV
-          else
-            echo "No matching package found for tag ${TAG_NAME}"
-            exit 1
-          fi
 
       - name: Configure npm for Authentication
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
