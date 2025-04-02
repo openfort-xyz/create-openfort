@@ -280,7 +280,7 @@ export class FileManager {
   outro() {
     let doneMessage = ''
     const cdProjectName = path.relative(this.cwd, this.root!)
-    doneMessage += `Done. Now run:\n`
+    doneMessage += `Done.\nNow run:`
     if (this.root !== this.cwd) {
       doneMessage += `\n  cd ${cdProjectName.includes(' ') ? `"${cdProjectName}"` : cdProjectName}`
     }
@@ -299,7 +299,7 @@ export class FileManager {
     }
 
     if (this.hasBackend) {
-      doneMessage += '\n\nFirst run the backend project in one terminal.'
+      doneMessage += '\n\nFor the backend project, run in one terminal.'
       doneMessage += '\n  cd backend'
       addRunToMessage()
       doneMessage += '\n\nThen run the frontend project in another terminal.'

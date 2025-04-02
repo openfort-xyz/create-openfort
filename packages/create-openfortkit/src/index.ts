@@ -78,6 +78,8 @@ async function init() {
     return
   }
 
+  console.log(`\n\n`)
+
   prompts.intro("Let's create a new Openfortkit project!")
 
   if (noValidate)
