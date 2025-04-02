@@ -1,6 +1,6 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "updated-files", "raw-templates"],
+  "exclude": ["node_modules", "updated-files", "raw-templates", "dist"],
   "compilerOptions": {
     "outDir": "dist",
     "target": "ES2022",
