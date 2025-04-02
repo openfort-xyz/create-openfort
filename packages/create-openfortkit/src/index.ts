@@ -136,9 +136,12 @@ async function init() {
   });
   if (prompts.isCancel(providers)) return cancel()
 
+  const hasWalletProvider = providers.includes(AuthProvider.WALLET)
+  let createEmbeddedSigner = true;
+
   // Wallet Connect Project ID for Wallet provider
   let walletConnectProjectId: string | undefined
-  if (providers.includes(AuthProvider.WALLET)) {
+  if (hasWalletProvider) {
     prompts.log.info("Wallet Connect is required for the Wallet provider.\nGet your Wallet Connect Project ID from https://cloud.reown.com/.")
     const result = await prompts.text({
       message: 'Wallet Connect Project ID:',
@@ -146,24 +149,27 @@ async function init() {
     })
     if (prompts.isCancel(result)) return cancel()
     walletConnectProjectId = result
-  }
 
-  // Choose if want to create a signer for the users
-  const createEmbeddedSigner = await prompts.select({
-    message: 'Do you want to create an embedded signer for your users?',
-    options: [
-      {
-        value: true,
-        label: 'Yes',
-        hint: 'Recommended'
-      },
-      {
-        value: false,
-        label: 'No',
-      },
-    ]
-  })
-  if (prompts.isCancel(createEmbeddedSigner)) return cancel()
+    // Choose if want to create a signer for the users
+    const createEmbeddedSignerResult = await prompts.select({
+      message: 'Do you want to create an embedded signer for your users?',
+      options: [
+        {
+          value: true,
+          label: 'Yes',
+          hint: 'Recommended'
+        },
+        {
+          value: false,
+          label: 'No',
+        },
+      ]
+    });
+    if (prompts.isCancel(createEmbeddedSignerResult)) return cancel()
+    createEmbeddedSigner = createEmbeddedSignerResult
+  } else {
+    prompts.log.info("No Wallet provider selected. Embedded signer will be created for the users.")
+  }
 
   let createBackend: boolean | undefined = false
   let recoveryMethod: RecoveryMethod | undefined
@@ -172,7 +178,7 @@ async function init() {
   if (createEmbeddedSigner) {
     // Choose recovery method
     const result = await prompts.select({
-      message: 'Select a recovery method.',
+      message: 'Select a recovery method for the embedded signer.',
       options: [
         {
           value: RecoveryMethod.AUTOMATIC,
@@ -249,7 +255,7 @@ ${JSON.stringify(body, null, 2)}
 `)
           }
         }).catch((error) => {
-          prompts.log.error('Invalid API endpoint')
+          prompts.log.error('Invalid API endpoint. Ensure you have a backend running and the endpoint is correct.')
         })
 
       attempts++;
