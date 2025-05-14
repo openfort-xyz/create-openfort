@@ -30,23 +30,23 @@ export const FRAMEWORKS: Framework[] = [
 ]
 export const DEFAULT_AVAILABLE_TEMPLATES = FRAMEWORKS.map(f => f.name)
 
-export async function promptTemplate({
-  argTemplate,
+export async function promptFramework({
+  argFramework,
   availableTemplates = DEFAULT_AVAILABLE_TEMPLATES,
 }: {
-  argTemplate?: string
+  argFramework?: string
   availableTemplates?: string[]
 }) {
-  let template = argTemplate
-  let hasInvalidArgTemplate = false
-  if (argTemplate && (!FRAMEWORKS.some(f => f.name === argTemplate) || !availableTemplates.includes(argTemplate))) {
+  let template = argFramework
+  let hasInvalidargFramework = false
+  if (argFramework && (!FRAMEWORKS.some(f => f.name === argFramework) || !availableTemplates.includes(argFramework))) {
     template = undefined
-    hasInvalidArgTemplate = true
+    hasInvalidargFramework = true
   }
   if (!template) {
     const framework = await prompts.select({
-      message: hasInvalidArgTemplate
-        ? `"${argTemplate}" isn't a valid template. Please choose from below: `
+      message: hasInvalidargFramework
+        ? `"${argFramework}" isn't a valid template. Please choose from below: `
         : 'Select a framework:',
       options: FRAMEWORKS.map((framework) => {
         const frameworkColor = framework.color

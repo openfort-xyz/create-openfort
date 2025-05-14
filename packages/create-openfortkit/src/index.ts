@@ -1,4 +1,4 @@
-import { cancel, FileManager, formatTargetDir, prompts, promptTemplate } from '@openfort/openfort-cli'
+import { cancel, FileManager, formatTargetDir, prompts, promptFramework } from '@openfort/openfort-cli'
 import { type OpenfortWalletConfig, type Theme } from '@openfort/openfort-kit'
 import { TemplateTransformer } from "@openfort/template-transformer"
 import mri from 'mri'
@@ -23,21 +23,39 @@ const argv = mri<{
   overwrite?: boolean
   help?: boolean
   verbose?: boolean
-  noValidate?: boolean
+  validate?: boolean
+  default?: boolean
+  theme?: Theme
+  dashboard?: string | boolean
 }>(process.argv.slice(2), {
   alias: {
     h: 'help',
-    t: 'template',
+    t: 'theme',
+    o: 'overwrite',
+    v: 'verbose',
+    d: 'default',
+    f: 'framework',
   },
   boolean: [
     'help',
     'overwrite',
     'verbose',
-    'noValidate',
+    'validate',
   ],
   string: [
+    'framework',
+    'dashboard',
+    'theme',
     'template',
   ],
+  default: {
+    template: 'vite',
+    overwrite: false,
+    verbose: false,
+    validate: true,
+    default: false,
+    dashboard: false,
+  },
 })
 
 // prettier-ignore
@@ -46,6 +64,16 @@ Usage: create-openfort [OPTION]... [DIRECTORY]
 
 Create a new Openfortkit project in TypeScript.
 With no arguments, start the CLI in interactive mode.
+
+Options:
+  -h, --help            Show this help message and exit
+  -f, --framework       Framework to use
+  -o, --overwrite       Overwrite existing files
+  -v, --verbose         Enable verbose mode
+  -d, --default         Use default values for all inputs
+  -t, --theme           Theme to use
+  
+  --no-validate     Disable input validation
 `
 type FileSrc = {
   providers: string
@@ -63,14 +91,19 @@ const filesSrc: Record<string, FileSrc> = {
 const defaultTargetDir = 'openfortkit-project'
 const defaultApiEndpoint = 'http://localhost:3110/api/protected-create-encryption-session'
 
+const defaultDashboardUrl = "https://dashboard.openfort.xyz";
+
 async function init() {
   const argTargetDir = argv._[0]
     ? formatTargetDir(String(argv._[0]))
     : undefined
-  const argTemplate = argv.template
+  const argFramework = argv.template
   const argOverwrite = argv.overwrite
   const verbose = argv.verbose
-  const noValidate = argv.noValidate
+  const validate = !!argv.validate
+  const defaultValues = argv.default
+  const dashboard = !!argv.dashboard ? argv.dashboard !== true ? String(argv.dashboard) : defaultDashboardUrl : false
+  const argsTheme = argv.theme
 
   const help = argv.help
   if (help) {
@@ -82,7 +115,12 @@ async function init() {
 
   prompts.intro("Let's create a new Openfortkit project!")
 
-  if (noValidate)
+
+  if (dashboard) {
+    prompts.log.info(`You can manage your Openfort project at ${dashboard}`)
+  }
+
+  if (!validate)
     prompts.log.warn("No validation will be performed on the input values.\nPlease make sure to provide valid values.")
 
   const fileManager = await new FileManager().init({
@@ -92,8 +130,8 @@ async function init() {
   })
   if (!fileManager || !fileManager.root) return;
 
-  const template = await promptTemplate({
-    argTemplate,
+  const template = await promptFramework({
+    argFramework,
   })
   if (!template) return;
 
@@ -103,37 +141,41 @@ async function init() {
   }
 
   // Choose auth providers
-  const providers = await prompts.multiselect({
-    message: 'Select your auth providers. (use arrow keys / space bar)',
-    initialValues: [AuthProvider.EMAIL, AuthProvider.GUEST],
-    options: [
-      {
-        value: AuthProvider.GUEST,
-        label: 'Guest',
-      },
-      {
-        value: AuthProvider.EMAIL,
-        label: 'Email',
-      },
-      {
-        value: AuthProvider.WALLET,
-        label: 'Wallet',
-      },
-      {
-        value: AuthProvider.FACEBOOK,
-        label: 'Facebook',
-      },
-      {
-        value: AuthProvider.GOOGLE,
-        label: 'Google',
-      },
-      {
-        value: AuthProvider.TWITTER,
-        label: 'Twitter',
-      },
-    ],
-    required: false,
-  });
+  const providersDefaultValues: AuthProvider[] = [AuthProvider.EMAIL, AuthProvider.GUEST];
+  const providers = defaultValues
+    ? providersDefaultValues
+    : await prompts.multiselect<AuthProvider>({
+      message: 'Select your auth providers. (use arrow keys / space bar)',
+      initialValues: providersDefaultValues,
+      options: [
+        {
+          value: AuthProvider.GUEST,
+          label: 'Guest',
+        },
+        {
+          value: AuthProvider.EMAIL,
+          label: 'Email',
+        },
+        {
+          value: AuthProvider.WALLET,
+          label: 'Wallet',
+        },
+        {
+          value: AuthProvider.FACEBOOK,
+          label: 'Facebook',
+        },
+        {
+          value: AuthProvider.GOOGLE,
+          label: 'Google',
+        },
+        {
+          value: AuthProvider.TWITTER,
+          label: 'Twitter',
+        },
+      ],
+      required: false,
+    });
+
   if (prompts.isCancel(providers)) return cancel()
 
   const hasWalletProvider = providers.includes(AuthProvider.WALLET)
@@ -167,7 +209,7 @@ async function init() {
     });
     if (prompts.isCancel(createEmbeddedSignerResult)) return cancel()
     createEmbeddedSigner = createEmbeddedSignerResult
-  } else {
+  } else if (!defaultValues) {
     prompts.log.info("No Wallet provider selected. Embedded signer will be created for the users.")
   }
 
@@ -177,20 +219,22 @@ async function init() {
 
   if (createEmbeddedSigner) {
     // Choose recovery method
-    const result = await prompts.select({
-      message: 'Select a recovery method for the embedded signer.',
-      options: [
-        {
-          value: RecoveryMethod.AUTOMATIC,
-          label: 'Automatic',
-          hint: 'Requires a backend to create an encryption session',
-        },
-        {
-          value: RecoveryMethod.PASSWORD,
-          label: 'Password',
-        },
-      ],
-    })
+    const result = defaultValues
+      ? RecoveryMethod.PASSWORD
+      : await prompts.select({
+        message: 'Select a recovery method for the embedded signer.',
+        options: [
+          {
+            value: RecoveryMethod.AUTOMATIC,
+            label: 'Automatic',
+            hint: 'Requires a backend to create an encryption session',
+          },
+          {
+            value: RecoveryMethod.PASSWORD,
+            label: 'Password',
+          },
+        ],
+      })
     if (prompts.isCancel(result)) return cancel()
     recoveryMethod = result
 
@@ -212,38 +256,37 @@ async function init() {
       })
       if (prompts.isCancel(result)) return cancel()
       createBackend = result
-    }
 
-    let valid = createBackend;
-    let attempts = 0
-    while (!valid) {
-      const apiEndpointResult = await prompts.text({
-        message: attempts === 0 ?
-          'Please provide your API endpoint to create an encryption session:'
-          : 'Please provide a valid API endpoint to create an encryption session:',
-        placeholder: 'http://localhost:3110/api/protected-create-encryption-session',
-        validate: (value) => {
-          if (noValidate) return;
-          if (!value) {
-            return 'API endpoint is required'
+      let valid = createBackend;
+      let attempts = 0
+      while (!valid) {
+        const apiEndpointResult = await prompts.text({
+          message: attempts === 0 ?
+            'Please provide your API endpoint to create an encryption session:'
+            : 'Please provide a valid API endpoint to create an encryption session:',
+          placeholder: 'http://localhost:3110/api/protected-create-encryption-session',
+          validate: (value) => {
+            if (!validate) return;
+            if (!value) {
+              return 'API endpoint is required'
+            }
           }
-        }
-      })
-      if (prompts.isCancel(apiEndpointResult)) return cancel()
-      apiEndpoint = apiEndpointResult
+        })
+        if (prompts.isCancel(apiEndpointResult)) return cancel()
+        apiEndpoint = apiEndpointResult
 
-      await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-        .then((response) => response.json())
-        .then((body) => {
-          if (body.session) {
-            valid = true
-          } else {
-            prompts.log.error(`Invalid API endpoint:
+        await fetch(apiEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+          .then((response) => response.json())
+          .then((body) => {
+            if (body.session) {
+              valid = true
+            } else {
+              prompts.log.error(`Invalid API endpoint:
 
 Response must be:
 {
@@ -253,17 +296,22 @@ Response must be:
 But got:
 ${JSON.stringify(body, null, 2)}
 `)
-          }
-        }).catch((error) => {
-          prompts.log.error('Invalid API endpoint. Ensure you have a backend running and the endpoint is correct.')
-        })
+            }
+          }).catch((error) => {
+            prompts.log.error('Invalid API endpoint. Ensure you have a backend running and the endpoint is correct.')
+          })
 
-      attempts++;
+        if (!validate) {
+          valid = true
+        }
+
+        attempts++;
+      }
     }
   }
 
   // Select theme
-  const theme = await prompts.select<Theme>({
+  const theme = argsTheme ? argsTheme : await prompts.select<Theme>({
     message: 'Select a theme:',
     options: [
       {
@@ -303,8 +351,7 @@ ${JSON.stringify(body, null, 2)}
   })
   if (prompts.isCancel(theme)) return cancel()
 
-  prompts.log.success('Good! You are all set.\nPlease provide the following keys to continue.\nGet your keys from https://dashboard.openfort.xyz/developers/api-keys')
-
+  prompts.log.success(`Good! You are all set.\nPlease provide the following keys to continue.\nGet your keys from ${dashboard || defaultDashboardUrl}/developers/api-keys`)
 
   const templateTransformer = TemplateTransformer.getTransformer(template, fileManager, verbose)
 
@@ -321,7 +368,7 @@ ${JSON.stringify(body, null, 2)}
     message: 'Openfort Publishable Key:',
     placeholder: 'pk...',
     validate: (value) => {
-      if (noValidate) return;
+      if (!validate) return;
       if (!value) {
         return 'Openfort Publishable Key is required'
       } else if (!pkRegex.test(value)) {
@@ -337,7 +384,7 @@ ${JSON.stringify(body, null, 2)}
       message: 'Openfort Secret:',
       placeholder: 'sk_...',
       validate: (value) => {
-        if (noValidate) return;
+        if (!validate) return;
         if (!value) {
           return 'Openfort Secret Key is required'
         } else if (!skRegex.test(value)) {
@@ -356,7 +403,7 @@ ${JSON.stringify(body, null, 2)}
       message: 'Shield Publishable Key:',
       placeholder: 'Your Shield Publishable Key',
       validate: (value) => {
-        if (noValidate) return;
+        if (!validate) return;
         if (!value) {
           return 'Shield Publishable Key is required'
         } else if (!uuidV4Regex.test(value)) {
@@ -377,7 +424,7 @@ ${JSON.stringify(body, null, 2)}
       message: 'Shield Secret:',
       placeholder: 'Your Shield Secret',
       validate: (value) => {
-        if (noValidate) return;
+        if (!validate) return;
         if (!value) {
           return 'Shield Secret Key is required'
         } else if (!uuidV4Regex.test(value)) {
@@ -394,7 +441,7 @@ ${JSON.stringify(body, null, 2)}
       message: 'Shield Encryption Share:',
       placeholder: 'Your Shield Encryption Share',
       validate: (value) => {
-        if (noValidate) return;
+        if (!validate) return;
         if (!value) {
           return 'Shield Encryption Share is required'
         } else if (value.length !== 44) {

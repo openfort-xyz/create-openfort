@@ -30,5 +30,5 @@
     "tslib": "^1.9.3",
     "typescript": "^5.0.4"
   },
-  "packageManager": "yarn@4.4.1"
+  "packageManager": "yarn@4.9.1"
 }
