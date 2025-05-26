@@ -115,6 +115,9 @@ async function init() {
 
   prompts.intro("Let's create a new Openfortkit project!")
 
+  if (verbose) {
+    prompts.log.success("Verbose mode enabled")
+  }
 
   if (dashboard) {
     prompts.log.info(`You can manage your Openfort project at ${dashboard}`)
@@ -123,7 +126,7 @@ async function init() {
   if (!validate)
     prompts.log.warn("No validation will be performed on the input values.\nPlease make sure to provide valid values.")
 
-  const fileManager = await new FileManager().init({
+  const fileManager = await new FileManager({ verbose }).init({
     argTargetDir,
     argOverwrite,
     defaultTargetDir,
@@ -528,7 +531,6 @@ ${JSON.stringify(body, null, 2)}
       port: 3110,
     })
   }
-
 
   templateTransformer.copyTemplate("openfortkit");
 

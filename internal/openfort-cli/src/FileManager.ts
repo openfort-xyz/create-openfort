@@ -36,6 +36,29 @@ function emptyDir(dir: string) {
   }
 }
 
+export async function cloneRepo(repo: string, targetDir: string, cwd?: string) {
+  return await new Promise<void>((resolve, reject) => {
+    const child = spawn('npx', ['degit', repo, targetDir], {
+      cwd,
+      shell: true,
+    });
+
+    child.on('close', (code, s) => {
+      // prompts.log.info(`Cloned ${repo} to ${targetDir} with code ${code} and signal ${s}`);
+
+      if (code === 0) {
+        resolve(); // Process completed successfully
+      } else {
+        reject(new Error(`Process exited with code ${code}`));
+      }
+    });
+
+    child.on('error', (err) => {
+      reject(err); // Handle errors
+    });
+  });
+}
+
 export function copyDir(srcDir: string, destDir: string, ignoreFiles: string[] = []) {
   fs.mkdirSync(destDir, { recursive: true });
   for (const file of fs.readdirSync(srcDir)) {
@@ -229,24 +252,18 @@ export class FileManager {
     const spinner = prompts.spinner()
     spinner.start('Creating backend...')
     try {
-      await new Promise<void>((resolve, reject) => {
-        const child = spawn('npx', ['degit', 'openfort-xyz/auth-sample-backend', 'backend'], {
-          cwd: this.root,
-          shell: true,
-        });
+      if (this.verbose) {
+        prompts.log.info(`Creating backend folder from openfort-xyz/openfort-backend-template`);
+      }
+      await cloneRepo(
+        'openfort-xyz/auth-sample-backend',
+        'backend',
+        this.root
+      )
 
-        child.on('close', (code) => {
-          if (code === 0) {
-            resolve(); // Process completed successfully
-          } else {
-            reject(new Error(`Process exited with code ${code}`));
-          }
-        });
-
-        child.on('error', (err) => {
-          reject(err); // Handle errors
-        });
-      });
+      if (this.verbose) {
+        prompts.log.info(`Cloned backend folder`);
+      }
 
       // Copy the .env file
       const envPath = path.join(this.root, "backend", ".env.example");

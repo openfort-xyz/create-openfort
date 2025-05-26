@@ -14,7 +14,7 @@ type Framework = {
 export const FRAMEWORKS: Framework[] = [
   {
     name: 'vite',
-    display: 'Vite',
+    display: 'Vite (React)',
     color: cyan,
   },
   {
