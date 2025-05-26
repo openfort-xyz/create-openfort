@@ -1429,7 +1429,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@openfort/template-transformer@workspace:internal/template-transformer"
   dependencies:
-    "@openfort/openfort-cli": "workspace:internal/openfort-cli"
     typescript: "npm:^5.0.4"
   bin:
     template-transformer: index.js
