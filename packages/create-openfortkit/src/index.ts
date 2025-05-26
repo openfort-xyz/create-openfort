@@ -461,8 +461,8 @@ ${JSON.stringify(body, null, 2)}
 
   if (createEmbeddedSigner) {
     if (recoveryMethod === RecoveryMethod.PASSWORD) {
-      await requestShieldPublishable()
       await requestShieldEncryptionShare()
+      await requestShieldPublishable()
 
       if (!shieldPublishableKey || !shieldEncryptionShare) {
         return cancel("Missing Shield Publishable Key or Shield Encryption Share")
@@ -482,9 +482,9 @@ ${JSON.stringify(body, null, 2)}
     } else if (recoveryMethod === RecoveryMethod.AUTOMATIC) {
       if (createBackend) {
         await requestOpenfortSecret()
+        await requestShieldEncryptionShare()
         await requestShieldPublishable()
         await requestShieldSecret()
-        await requestShieldEncryptionShare()
       } else {
         await requestShieldPublishable()
       }
