@@ -1,8 +1,8 @@
 # Create openfort
 
-## Create openfortkit
+## Create openfort
 
 ```sh
-yarn create openfortkit
+yarn create openfort
 ```
 
