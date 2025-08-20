@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.1] - 2025-05-26
+
+### Renaming
+
+- Renamed package to create-openfort
+
 ## [0.0.6] - 2025-05-26
 
 ### Feat
@@ -19,7 +25,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fix
 
-Always create embedded signer when not wallet provider. 
+Always create embedded signer when not wallet provider.
 
 ## [0.0.3] - 2025-04-02
 

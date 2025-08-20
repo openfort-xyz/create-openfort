@@ -9,12 +9,11 @@
   ],
   "scripts": {
     "dev:cli": "yarn workspace @openfort/openfort-cli run dev",
-    "dev:kit": "yarn workspace create-openfortkit run dev",
+    "dev": "yarn workspace create-openfort run dev",
     "dev:template": "yarn workspace @openfort/template-transformer run dev",
     "build:cli": "yarn workspace @openfort/openfort-cli run build",
-    "build:kit": "yarn workspace create-openfortkit run build",
     "build:template": "yarn workspace @openfort/template-transformer run build",
-    "test:kit": "yarn workspace create-openfortkit run test",
+    "test:kit": "yarn workspace create-openfort run test",
     "build": "yarn workspaces foreach -A run build",
     "lint": "yarn workspaces foreach -A run lint"
   },

@@ -2825,9 +2825,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"create-openfortkit@workspace:packages/create-openfortkit":
+"create-openfort@workspace:packages/create-openfort":
   version: 0.0.0-use.local
-  resolution: "create-openfortkit@workspace:packages/create-openfortkit"
+  resolution: "create-openfort@workspace:packages/create-openfort"
   dependencies:
     "@openfort/openfort-cli": "workspace:internal/openfort-cli"
     "@openfort/openfort-kit": "npm:^0.0.9"
@@ -2841,7 +2841,7 @@ __metadata:
     viem: "npm:^2.23.2"
     wagmi: "npm:^2.14.11"
   bin:
-    create-openfortkit: index.js
+    create-openfort: index.js
   languageName: unknown
   linkType: soft
 

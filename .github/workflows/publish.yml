@@ -23,7 +23,7 @@ jobs:
             echo "PACKAGE_DIR=packages/create-openfortkit" >> $GITHUB_ENV
           elif [[ "${TAG_NAME}" == openfortjs-v* ]]; then
             echo "PACKAGE_DIR=packages/create-openfort-js" >> $GITHUB_ENV
-          elif [[ "${TAG_NAME}" == openfort-v* ]]; then
+          elif [[ "${TAG_NAME}" == v* ]]; then
             echo "PACKAGE_DIR=packages/create-openfort" >> $GITHUB_ENV
           else
             echo "No matching package found for tag ${TAG_NAME}"
