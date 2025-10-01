@@ -1,8 +1,8 @@
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { prompts } from './prompts';
-import { cancel, getFullCustomCommand, pkgFromUserAgent, PkgInfo } from "./utils";
-import { spawn } from 'node:child_process';
+import { cancel, pkgFromUserAgent, PkgInfo } from "./utils";
 
 function isValidPackageName(projectName: string) {
   return /^(?:@[a-z\d\-*~][a-z\d\-*._~]*\/)?[a-z\d\-~][a-z\d\-._~]*$/.test(
@@ -36,10 +36,31 @@ function emptyDir(dir: string) {
   }
 }
 
-export async function cloneRepo(repo: string, targetDir: string, cwd?: string) {
+export async function cloneRepo(repo: string, targetDir: string) {
   return await new Promise<void>((resolve, reject) => {
     const child = spawn('npx', ['degit', repo, targetDir], {
-      cwd,
+      shell: true,
+    });
+
+    child.on('close', (code, s) => {
+      // prompts.log.info(`Cloned ${repo} to ${targetDir} with code ${code} and signal ${s}`);
+
+      if (code === 0) {
+        resolve(); // Process completed successfully
+      } else {
+        reject(new Error(`Process exited with code ${code}`));
+      }
+    });
+
+    child.on('error', (err) => {
+      reject(err); // Handle errors
+    });
+  });
+}
+
+export async function gitPick(repo: string, targetDir: string) {
+  return await new Promise<void>((resolve, reject) => {
+    const child = spawn('npx', ['gitpick', repo, targetDir], {
       shell: true,
     });
 
@@ -95,7 +116,7 @@ export class FileManager {
   cwd: string = process.cwd();
   targetDir?: string;
   packageName?: string;
-  hasBackend: boolean = false;
+  addSubfolders: boolean = false;
   verbose: boolean;
   pkgInfo?: PkgInfo
   pkgManager: string = 'npm'
@@ -206,7 +227,7 @@ export class FileManager {
     if (!this.root) {
       throw new Error('FileManager not initialized')
     }
-    const targetPath = path.join(this.root, this.hasBackend ? "frontend" : "", file)
+    const targetPath = path.join(this.root, this.addSubfolders ? "frontend" : "", file)
     return targetPath
   }
 
@@ -230,6 +251,32 @@ export class FileManager {
     return fs.readFileSync(targetPath, 'utf-8').toString();
   }
 
+  async gitPick(repo: string) {
+    if (!this.root) {
+      throw new Error('FileManager not initialized')
+    }
+
+    const spinner = prompts.spinner()
+    spinner.start('Downloading template...')
+    try {
+      if (this.verbose) {
+        prompts.log.info(`Cloning repo ${repo}`);
+      }
+      await gitPick(
+        repo,
+        this.addSubfolders ? path.join(this.root, "frontend") : this.root
+      )
+
+      if (this.verbose) {
+        prompts.log.info(`Cloned repo ${repo}`);
+      }
+
+      spinner.stop('Template download completed successfully! 🚀');
+    } catch (error) {
+      spinner.stop('Failed to download template: ' + JSON.stringify(error));
+    }
+  }
+
   async createBackend({
     openfortSecretKey,
     shieldSecretKey,
@@ -247,27 +294,31 @@ export class FileManager {
       throw new Error('FileManager not initialized')
     }
 
-    this.hasBackend = true;
+    this.addSubfolders = true;
 
     const spinner = prompts.spinner()
     spinner.start('Creating backend...')
     try {
       if (this.verbose) {
-        prompts.log.info(`Creating backend folder from openfort-xyz/openfort-backend-template`);
+        prompts.log.info(`Creating backend folder from openfort-xyz/openfort-backend-quickstart`);
       }
       await cloneRepo(
-        'openfort-xyz/auth-sample-backend',
-        'backend',
-        this.root
+        'openfort-xyz/openfort-backend-quickstart',
+        this.addSubfolders ? path.join(this.root, "backend") : this.root
       )
 
       if (this.verbose) {
         prompts.log.info(`Cloned backend folder`);
+        prompts.log.info(`Copying .env.example to .env`);
       }
 
       // Copy the .env file
       const envPath = path.join(this.root, "backend", ".env.example");
       const targetPath = path.join(this.root, "backend", ".env");
+
+      if (this.verbose) {
+        prompts.log.info(`Reading .env.example from ${envPath}`);
+      }
 
       // Read line by line and replace the variables
       const envContent = fs.readFileSync(envPath, 'utf-8').toString();
@@ -278,6 +329,10 @@ export class FileManager {
         .replace(/SHIELD_ENCRYPTION_SHARE=/g, `SHIELD_ENCRYPTION_SHARE=${shieldEncryptionShare}`)
         .replace(/PORT=/g, `PORT=${port}`)
 
+      if (this.verbose) {
+        prompts.log.info(`Writing .env to ${targetPath}`);
+      }
+
       fs.writeFileSync(targetPath, updatedEnvContent);
 
       spinner.stop('Backend creation completed successfully! 🚀');
@@ -286,12 +341,56 @@ export class FileManager {
     }
   }
 
+
+
   editFile(file: string, callback: (content: string) => string) {
     if (!this.root) {
       throw new Error('FileManager not initialized')
     }
     const targetPath = this.getFilePath(file)
     editFile(targetPath, callback)
+  }
+
+  addEnv(env: Record<string, string | undefined>) {
+    if (!this.root) {
+      throw new Error("FileManager not initialized");
+    }
+
+    const envPath = path.join(this.root, this.addSubfolders ? path.join(this.root, "frontend") : this.root, ".env.example");
+    const targetPath = path.join(this.root, this.addSubfolders ? path.join(this.root, "frontend") : this.root, ".env");
+
+    // read .env.example
+    const example = fs.readFileSync(envPath, "utf-8");
+
+    // split into lines
+    const lines = example.split("\n");
+
+    const filledLines = lines.map((line) => {
+      if (!line.trim() || line.trim().startsWith("#")) {
+        return line; // keep comments & empty lines
+      }
+
+      const [key] = line.split("=");
+      if (!key) return line;
+
+      // take everything after the last "_"
+      const suffix = key.includes("_") ? key.split("_").slice(1).join("_") : key;
+
+      // const value = Object.entries(env).find(([envKey]) => {
+      //   // exact match or suffix match
+      //   return envKey === key
+      // })?.[1];
+
+      const value = env[suffix];
+
+      if (value !== undefined) {
+        return `${key}=${value}`;
+      }
+
+      return line; // keep unchanged if no match
+    });
+
+    fs.writeFileSync(targetPath, filledLines.join("\n"), "utf-8");
   }
 
   outro() {
@@ -315,7 +414,7 @@ export class FileManager {
       }
     }
 
-    if (this.hasBackend) {
+    if (this.addSubfolders) {
       doneMessage += '\n\nFor the backend project, run in one terminal.'
       doneMessage += '\n  cd backend'
       addRunToMessage()

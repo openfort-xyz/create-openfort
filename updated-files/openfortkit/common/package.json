@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "@openfort/openfort-kit": "latest",
-    "@tanstack/react-query": "latest",
-    "viem": "latest",
-    "wagmi": "latest"
-  }
-}

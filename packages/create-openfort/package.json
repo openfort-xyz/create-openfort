@@ -1,6 +1,6 @@
 {
   "name": "create-openfort",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "license": "MIT",
   "author": "Openfort (https://www.openfort.xyz)",
@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "dev": "unbuild --watch",
-    "test": "node index.js --verbose",
+    "test": "cd tests && node ./../index.js",
     "build": "unbuild && node build.js",
     "lint": "tsc --noEmit"
   },
@@ -20,9 +20,7 @@
   },
   "devDependencies": {
     "@openfort/openfort-cli": "workspace:internal/openfort-cli",
-    "@openfort/openfort-kit": "^0.0.9",
-    "@openfort/template-transformer": "workspace:internal/template-transformer",
-    "@tanstack/react-query": "^5.69.0",
+    "@openfort/react": "^0.0.17",
     "mri": "^1.2.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",

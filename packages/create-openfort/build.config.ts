@@ -17,5 +17,5 @@ export default defineBuildConfig({
       ]
     },
   },
-  externals: ['react', 'react-dom', '@openfort/openfort-kit', '@tanstack/react-query', 'wagmi', 'viem/chains'],
+  externals: ['react', 'react-dom', '@openfort/react', '@tanstack/react-query', 'wagmi', 'viem/chains'],
 })
