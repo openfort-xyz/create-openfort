@@ -19,7 +19,6 @@
     "node": "^18.0.0 || ^20.0.0 || >=22.0.0"
   },
   "devDependencies": {
-    "@openfort/openfort-cli": "workspace:internal/openfort-cli",
     "@openfort/react": "^0.0.17",
     "mri": "^1.2.0",
     "react": "^18.0.0",

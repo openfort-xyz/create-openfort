@@ -8,10 +8,8 @@
     "internal/*"
   ],
   "scripts": {
-    "dev:cli": "yarn workspace @openfort/openfort-cli run dev",
     "dev": "yarn workspace create-openfort run dev",
     "dev:template": "yarn workspace @openfort/template-transformer run dev",
-    "build:cli": "yarn workspace @openfort/openfort-cli run build",
     "build:template": "yarn workspace @openfort/template-transformer run build",
     "test": "yarn workspace create-openfort run test",
     "build": "yarn workspaces foreach -A run build",
