@@ -10,12 +10,5 @@ export default defineBuildConfig({
       minify: true,
     },
   },
-  hooks: {
-    'rollup:options'(_ctx, options) {
-      options.plugins = [
-        options.plugins,
-      ]
-    },
-  },
   externals: ['react', 'react-dom', '@openfort/react', '@tanstack/react-query', 'wagmi', 'viem/chains'],
 })
