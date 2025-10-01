@@ -10,36 +10,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
-    name: Verify
-    uses: ./.github/workflows/verify.yml
+  ci:
+    name: CI Checks
+    uses: ./.github/workflows/ci.yml
     permissions:
       contents: read
-
-  build-and-test:
-    name: Build and Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          submodules: "recursive"
-
-      - name: Install dependencies
-        uses: ./.github/actions/install-dependencies
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Build
-        run: pnpm build
 
   release:
     name: Release
-    needs: [verify, build-and-test]
+    needs: [ci]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

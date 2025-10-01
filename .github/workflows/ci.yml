@@ -1,17 +1,27 @@
 name: CI
 
 on:
+  workflow_call:
   pull_request:
     branches: [main]
   push:
     branches: [main]
 
 jobs:
-  verify:
-    name: Verify
-    uses: ./.github/workflows/verify.yml
+  audit:
+    name: Audit Dependencies
+    runs-on: ubuntu-latest
     permissions:
       contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Run security audit
+        run: pnpm audit
 
   build-and-test:
     name: Build and Test
@@ -21,7 +31,7 @@ jobs:
       contents: read
     steps:
       - name: Clone repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
