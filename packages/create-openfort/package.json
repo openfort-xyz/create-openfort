@@ -3,16 +3,15 @@
   "version": "0.0.2",
   "type": "module",
   "license": "MIT",
-  "author": "Openfort (https://www.openfort.xyz)",
-  "bin": "index.js",
+  "author": "Openfort (https://www.openfort.io)",
+  "bin": "dist/index.js",
   "files": [
-    "index.js",
     "dist"
   ],
   "scripts": {
     "dev": "unbuild --watch",
-    "test": "cd tests && node ./../index.js",
-    "build": "unbuild && node build.js",
+    "test": "cd tests && node ./../dist/index.js",
+    "build": "unbuild && node scripts/build.js",
     "lint": "tsc --noEmit"
   },
   "engines": {
@@ -23,6 +22,7 @@
     "@openfort/react": "^0.0.17",
     "@types/cross-spawn": "^6.0.6",
     "cross-spawn": "^7.0.6",
+    "degit": "^2.8.4",
     "mri": "^1.2.0",
     "picocolors": "^1.1.1",
     "react": "^18.0.0",

@@ -1,9 +1,7 @@
 # Create openfort
 
-## Create openfort
-
 ```sh
-yarn create openfort
+pnpm create openfort
 ```
 
 ## Contributing
@@ -11,17 +9,17 @@ yarn create openfort
 1. **Install dependencies**
 
    ```sh
-   yarn
+   pnpm install
    ```
 
 2. **Build with watch mode**
 
    ```sh
-   yarn dev
+   pnpm dev
    ```
 
 3. **Test your changes**
 
    ```sh
-   yarn test
+   pnpm test
    ```

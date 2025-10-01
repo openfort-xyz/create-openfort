@@ -42,13 +42,11 @@ export async function cloneRepo(repo: string, targetDir: string) {
       shell: true,
     });
 
-    child.on('close', (code, s) => {
-      // prompts.log.info(`Cloned ${repo} to ${targetDir} with code ${code} and signal ${s}`);
-
+    child.on('close', (code) => {
       if (code === 0) {
         resolve(); // Process completed successfully
       } else {
-        reject(new Error(`Process exited with code ${code}`));
+        reject(new Error(`Failed to clone repository from ${repo}. Process exited with code ${code}`));
       }
     });
 
@@ -60,17 +58,15 @@ export async function cloneRepo(repo: string, targetDir: string) {
 
 export async function gitPick(repo: string, targetDir: string) {
   return await new Promise<void>((resolve, reject) => {
-    const child = spawn('npx', ['gitpick', repo, targetDir], {
+    const child = spawn('npx', ['degit', repo, targetDir], {
       shell: true,
     });
 
-    child.on('close', (code, s) => {
-      // prompts.log.info(`Cloned ${repo} to ${targetDir} with code ${code} and signal ${s}`);
-
+    child.on('close', (code) => {
       if (code === 0) {
         resolve(); // Process completed successfully
       } else {
-        reject(new Error(`Process exited with code ${code}`));
+        reject(new Error(`Failed to clone repository from ${repo}. Process exited with code ${code}`));
       }
     });
 
@@ -273,7 +269,7 @@ export class FileManager {
 
       spinner.stop('Template download completed successfully! 🚀');
     } catch (error) {
-      spinner.stop('Failed to download template: ' + JSON.stringify(error));
+      spinner.stop('Failed to download template: ' + (error instanceof Error ? error.message : String(error)));
     }
   }
 
