@@ -2,37 +2,34 @@ name: CI
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  ci:
-    name: CI
+  verify:
+    name: Verify
+    uses: ./.github/workflows/verify.yml
+    permissions:
+      contents: read
+
+  build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Clone repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          version: 10.16.1
+          submodules: "recursive"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: Lint
         run: pnpm lint
 
       - name: Build
         run: pnpm build
-

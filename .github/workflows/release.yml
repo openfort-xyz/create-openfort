@@ -2,38 +2,34 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  release:
-    name: Release
-    runs-on: ubuntu-latest
+  verify:
+    name: Verify
+    uses: ./.github/workflows/verify.yml
     permissions:
-      contents: write
-      pull-requests: write
-      id-token: write
+      contents: read
+
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
-      - name: Checkout Repo
+      - name: Clone repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 0
+          submodules: "recursive"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.16.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: Lint
         run: pnpm lint
@@ -41,12 +37,31 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Create Release Pull Request or Publish to npm
-        id: changesets
+  release:
+    name: Release
+    needs: [verify, build-and-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          submodules: "recursive"
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Publish to NPM
         uses: changesets/action@v1
         with:
+          createGithubReleases: ${{ github.ref == 'refs/heads/main' }}
           publish: pnpm changeset:publish
           version: pnpm changeset:version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
