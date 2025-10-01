@@ -10,7 +10,6 @@
   ],
   "scripts": {
     "dev": "unbuild --watch",
-    "test": "cd tests && node ./../dist/index.js",
     "build": "unbuild && node scripts/build.js",
     "lint": "tsc --noEmit"
   },
