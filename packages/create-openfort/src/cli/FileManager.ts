@@ -48,13 +48,13 @@ export async function cloneRepo(repo: string, targetDir: string, { verbose }: { 
 
     child.stdout.on('data', (data) => {
       if (verbose) {
-        process.stdout.write(`\r[stdout]: ${data}`);
+        process.stdout.write(`\r[CLONE_REPO stdout]: ${data}`);
       }
     });
 
     child.stderr.on('data', (data) => {
       if (verbose) {
-        process.stdout.write(`\r[stderr]: ${data}`);
+        process.stdout.write(`\r[CLONE_REPO stderr]: ${data}`);
       }
     });
 
@@ -249,6 +249,7 @@ export class FileManager {
     if (!this.root) {
       throw new Error('FileManager not initialized')
     }
+    const tmpDir = path.join(this.root, "tmp");
 
     const spinner = prompts.spinner()
     spinner.start('Downloading template...')
@@ -259,17 +260,17 @@ export class FileManager {
 
       const targetDir = this.addSubfolders ? path.join(this.root, "frontend") : this.root;
 
-      await cloneRepo(repo, path.join(this.root, "tmp"), { verbose: this.verbose });
+      await cloneRepo(repo, tmpDir, { verbose: this.verbose });
 
       if (this.verbose) {
         prompts.log.info(`Repo cloned. Copying path "${repoPath}" to ${targetDir}`);
       }
 
       // Move only the specified subfolder to the targetDir
-      copyDir(path.join(this.root, "tmp", repoPath), targetDir);
+      copyDir(path.join(tmpDir, repoPath), targetDir);
 
       // Remove the temporary directory
-      fs.rmSync(path.join(this.root, "tmp"), { recursive: true, force: true });
+      fs.rmSync(tmpDir, { recursive: true, force: true });
 
       if (this.verbose) {
         prompts.log.info(`Cloned repo ${repo}`);
@@ -277,6 +278,11 @@ export class FileManager {
 
       spinner.stop('Template download completed successfully! 🚀');
     } catch (error) {
+      // Cleanup
+      if (fs.existsSync(tmpDir)) {
+        fs.rmSync(tmpDir, { recursive: true, force: true })
+      }
+
       spinner.stop('Failed to download template: ' + JSON.stringify(error));
     }
   }
