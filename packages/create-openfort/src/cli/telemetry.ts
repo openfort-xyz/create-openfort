@@ -25,6 +25,7 @@ class Telemetry {
 
   send = async ({
     properties = {},
+    status,
   }: {
     properties?: Record<string, any>,
     status: 'started' | 'completed' | 'error'
@@ -40,8 +41,8 @@ class Telemetry {
       cli_version: CLI_VERSION,
       node_version: process.version,
       platform: process.platform,
-      status: properties.status,
       projectId: this.projectId,
+      cli_status: status,
       ...properties,
     };
     const response = await fetch(`${host}/capture/`, {
