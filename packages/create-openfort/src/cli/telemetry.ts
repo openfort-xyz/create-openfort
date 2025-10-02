@@ -4,6 +4,7 @@ import { prompts } from './prompts';
 import { hostname, userInfo } from 'os';
 import { createHash } from 'crypto';
 import { isVerboseDebug } from './verboseLevel';
+import { fileManager } from './FileManager';
 
 const posthogKey = "phc_HosujvcO5QzmU2MVvZo8AxWV0pplTZJLr3jEd8dRVPE"
 const posthogHost = "https://analytics.openfort.xyz"
@@ -20,6 +21,7 @@ class Telemetry {
   sessionId: string;
 
   projectId?: string;
+  template?: string;
 
   constructor() {
     this.anonymousId = getAnonymousId();
@@ -46,8 +48,12 @@ class Telemetry {
       cli_version: CLI_VERSION,
       node_version: process.version,
       platform: process.platform,
-      projectId: this.projectId,
       cli_status: status,
+
+      projectId: this.projectId,
+      projectName: fileManager.packageName,
+      template: this.template,
+
       ...properties,
     };
     const response = await fetch(`${posthogHost}/capture/`, {

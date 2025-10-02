@@ -1,9 +1,9 @@
 import type { Theme } from '@openfort/react'
 import mri from 'mri'
-import { cancel, FileManager, formatTargetDir, prompts, promptTemplate } from './cli'
-import { CLI_VERSION } from './version'
+import { cancel, fileManager, formatTargetDir, prompts, promptTemplate } from './cli'
 import { telemetry } from './cli/telemetry'
 import { isVerbose, setVerboseLevel } from './cli/verboseLevel'
+import { CLI_VERSION } from './version'
 
 // RecoveryMethod and AuthProvider come from @openfort/react
 // but if we import them we include the whole package, increasing the bundle size from ~120kb to almost 700kb
@@ -131,11 +131,12 @@ async function init() {
   if (!validate)
     prompts.log.warn("No validation will be performed on the input values.\nPlease make sure to provide valid values.")
 
-  const fileManager = await new FileManager().init({
+  await fileManager.init({
     argTargetDir,
     argOverwrite,
     defaultTargetDir,
   })
+
   if (!fileManager || !fileManager.root) return;
 
   if (argTemplate && isVerbose) {

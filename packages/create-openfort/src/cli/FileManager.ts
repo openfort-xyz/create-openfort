@@ -461,3 +461,5 @@ export class FileManager {
     prompts.outro(doneMessage)
   }
 }
+
+export const fileManager = new FileManager();

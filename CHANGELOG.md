@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.11] - 2025-10-02
+
+### Feat
+
+- Add more telemetry properties (projectName, template)
+
 ## [0.0.10] - 2025-10-02
 
 ### Fix
