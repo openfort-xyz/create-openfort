@@ -443,7 +443,7 @@ ${JSON.stringify(body, null, 2)}
     })
   }
 
-  await fileManager.gitPick("openfort-xyz/openfort-react/tree/main/examples/quickstarts/" + template)
+  await fileManager.gitPick("openfort-xyz/openfort-react", `examples/quickstarts/${template}`)
 
   const env: Record<string, string | undefined> = {
     SHIELD_PUBLISHABLE_KEY: shieldPublishableKey,

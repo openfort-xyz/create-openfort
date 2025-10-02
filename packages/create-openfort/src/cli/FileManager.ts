@@ -74,44 +74,6 @@ export async function cloneRepo(repo: string, targetDir: string, { verbose }: { 
   });
 }
 
-export async function gitPick(repo: string, targetDir: string, { verbose }: { verbose?: boolean } = {}) {
-  return await new Promise<void>((resolve, reject) => {
-    if (verbose) {
-      prompts.log.info(`Running: npx gitpick ${repo} ${targetDir}`);
-    }
-
-    const child = spawn('npx', ['gitpick', repo, targetDir], {
-      shell: true,
-    });
-
-    child.stdout.on('data', (data) => {
-      if (verbose) {
-        process.stdout.write(`\r[stdout]: ${data}`);
-      }
-    });
-
-    child.stderr.on('data', (data) => {
-      if (verbose) {
-        process.stdout.write(`\r[stderr]: ${data}`);
-      }
-    });
-
-    child.on('close', (code, s) => {
-      // prompts.log.info(`Cloned ${repo} to ${targetDir} with code ${code} and signal ${s}`);
-
-      if (code === 0) {
-        resolve(); // Process completed successfully
-      } else {
-        reject(new Error(`Process exited with code ${code}`));
-      }
-    });
-
-    child.on('error', (err) => {
-      reject(err); // Handle errors
-    });
-  });
-}
-
 export function copyDir(srcDir: string, destDir: string, ignoreFiles: string[] = []) {
   fs.mkdirSync(destDir, { recursive: true });
   for (const file of fs.readdirSync(srcDir)) {
@@ -283,7 +245,7 @@ export class FileManager {
     return fs.readFileSync(targetPath, 'utf-8').toString();
   }
 
-  async gitPick(repo: string) {
+  async gitPick(repo: string, repoPath: string) {
     if (!this.root) {
       throw new Error('FileManager not initialized')
     }
@@ -292,14 +254,22 @@ export class FileManager {
     spinner.start('Downloading template...')
     try {
       if (this.verbose) {
-        prompts.log.info(`Cloning repo ${repo}`);
+        prompts.log.info(`Cloning repo ${repo} path ${repoPath}`);
       }
 
-      await gitPick(
-        repo,
-        this.addSubfolders ? path.join(this.root, "frontend") : this.root,
-        { verbose: this.verbose }
-      )
+      const targetDir = this.addSubfolders ? path.join(this.root, "frontend") : this.root;
+
+      await cloneRepo(repo, path.join(this.root, "tmp"), { verbose: this.verbose });
+
+      if (this.verbose) {
+        prompts.log.info(`Repo cloned. Copying path "${repoPath}" to ${targetDir}`);
+      }
+
+      // Move only the specified subfolder to the targetDir
+      copyDir(path.join(this.root, "tmp", repoPath), targetDir);
+
+      // Remove the temporary directory
+      fs.rmSync(path.join(this.root, "tmp"), { recursive: true, force: true });
 
       if (this.verbose) {
         prompts.log.info(`Cloned repo ${repo}`);
@@ -391,8 +361,17 @@ export class FileManager {
       throw new Error("FileManager not initialized");
     }
 
-    const envPath = path.join(this.root, this.addSubfolders ? path.join(this.root, "frontend") : this.root, ".env.example");
-    const targetPath = path.join(this.root, this.addSubfolders ? path.join(this.root, "frontend") : this.root, ".env");
+    if (this.verbose) {
+      prompts.log.info(`Filling .env with provided environment variables: \n${JSON.stringify(env, null, 2)}`);
+    }
+
+    const envPath = this.getFilePath(".env.example");
+    const targetPath = this.getFilePath(".env");
+
+    if (this.verbose) {
+      prompts.log.info(`Reading .env.example from ${envPath}`);
+      prompts.log.info(`Writing .env to ${targetPath}`);
+    }
 
     // read .env.example
     const example = fs.readFileSync(envPath, "utf-8");
