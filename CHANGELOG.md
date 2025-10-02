@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.3] - 2025-10-02
+
+### Renaming
+
+- Add more verbose logs to debug
+
 ## [0.0.2] - 2025-10-01
 
 ### Renaming
