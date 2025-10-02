@@ -34,6 +34,10 @@ class Telemetry {
 
     const key = process.env.POSTHOG_KEY;
     const host = process.env.POSTHOG_HOST;
+    if (isVerboseDebug) {
+      console.log(`Sending telemetry to ${host}`);
+    }
+
     if (!key || !host) return;
 
     const fullProperties = {
