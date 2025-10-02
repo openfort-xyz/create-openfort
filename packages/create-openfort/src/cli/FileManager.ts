@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { prompts } from './prompts';
 import { cancel, pkgFromUserAgent, PkgInfo } from "./utils";
+import { telemetry } from './telemetry';
+import { isVerbose } from './verboseLevel';
 
 function isValidPackageName(projectName: string) {
   return /^(?:@[a-z\d\-*~][a-z\d\-*._~]*\/)?[a-z\d\-~][a-z\d\-._~]*$/.test(
@@ -111,17 +113,15 @@ export class FileManager {
   targetDir?: string;
   packageName?: string;
   addSubfolders: boolean = false;
-  verbose: boolean;
   pkgInfo?: PkgInfo
   pkgManager: string = 'npm'
 
-  constructor({ verbose }: { verbose?: boolean } = {}) {
+  constructor() {
 
     this.pkgInfo = pkgFromUserAgent()
     this.pkgManager = this.pkgInfo?.name ?? 'npm'
-    this.verbose = !!verbose
 
-    if (verbose)
+    if (isVerbose)
       prompts.log.info(`Using ${this.pkgInfo?.name ?? 'npm'} ${this.pkgInfo?.version ?? ''}`)
 
   }
@@ -254,15 +254,15 @@ export class FileManager {
     const spinner = prompts.spinner()
     spinner.start('Downloading template...')
     try {
-      if (this.verbose) {
+      if (isVerbose) {
         prompts.log.info(`Cloning repo ${repo} path ${repoPath}`);
       }
 
       const targetDir = this.addSubfolders ? path.join(this.root, "frontend") : this.root;
 
-      await cloneRepo(repo, tmpDir, { verbose: this.verbose });
+      await cloneRepo(repo, tmpDir, { verbose: isVerbose });
 
-      if (this.verbose) {
+      if (isVerbose) {
         prompts.log.info(`Repo cloned. Copying path "${repoPath}" to ${targetDir}`);
       }
 
@@ -272,13 +272,22 @@ export class FileManager {
       // Remove the temporary directory
       fs.rmSync(tmpDir, { recursive: true, force: true });
 
-      if (this.verbose) {
+      if (isVerbose) {
         prompts.log.info(`Cloned repo ${repo}`);
       }
 
       spinner.stop('Template download completed successfully! 🚀');
     } catch (error) {
       // Cleanup
+      telemetry.send({
+        properties: {
+          error: JSON.stringify(error),
+          repo,
+          repoPath,
+        },
+        status: 'error',
+      });
+
       if (fs.existsSync(tmpDir)) {
         fs.rmSync(tmpDir, { recursive: true, force: true })
       }
@@ -309,16 +318,16 @@ export class FileManager {
     const spinner = prompts.spinner()
     spinner.start('Creating backend...')
     try {
-      if (this.verbose) {
+      if (isVerbose) {
         prompts.log.info(`Creating backend folder from openfort-xyz/openfort-backend-quickstart`);
       }
       await cloneRepo(
         'openfort-xyz/openfort-backend-quickstart',
         this.addSubfolders ? path.join(this.root, "backend") : this.root,
-        { verbose: this.verbose }
+        { verbose: isVerbose }
       )
 
-      if (this.verbose) {
+      if (isVerbose) {
         prompts.log.info(`Cloned backend folder`);
         prompts.log.info(`Copying .env.example to .env`);
       }
@@ -327,7 +336,7 @@ export class FileManager {
       const envPath = path.join(this.root, "backend", ".env.example");
       const targetPath = path.join(this.root, "backend", ".env");
 
-      if (this.verbose) {
+      if (isVerbose) {
         prompts.log.info(`Reading .env.example from ${envPath}`);
       }
 
@@ -340,7 +349,7 @@ export class FileManager {
         .replace(/SHIELD_ENCRYPTION_SHARE=/g, `SHIELD_ENCRYPTION_SHARE=${shieldEncryptionShare}`)
         .replace(/PORT=/g, `PORT=${port}`)
 
-      if (this.verbose) {
+      if (isVerbose) {
         prompts.log.info(`Writing .env to ${targetPath}`);
       }
 
@@ -349,6 +358,12 @@ export class FileManager {
       spinner.stop('Backend creation completed successfully! 🚀');
     } catch (error) {
       spinner.stop('Failed to create backend: ' + JSON.stringify(error));
+      telemetry.send({
+        properties: {
+          error: JSON.stringify(error),
+        },
+        status: 'error',
+      });
     }
   }
 
@@ -367,14 +382,14 @@ export class FileManager {
       throw new Error("FileManager not initialized");
     }
 
-    if (this.verbose) {
+    if (isVerbose) {
       prompts.log.info(`Filling .env with provided environment variables: \n${JSON.stringify(env, null, 2)}`);
     }
 
     const envPath = this.getFilePath(".env.example");
     const targetPath = this.getFilePath(".env");
 
-    if (this.verbose) {
+    if (isVerbose) {
       prompts.log.info(`Reading .env.example from ${envPath}`);
       prompts.log.info(`Writing .env to ${targetPath}`);
     }

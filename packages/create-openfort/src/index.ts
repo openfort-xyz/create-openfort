@@ -1,7 +1,12 @@
 import type { Theme } from '@openfort/react'
+import dotenv from 'dotenv'
 import mri from 'mri'
 import { cancel, FileManager, formatTargetDir, prompts, promptTemplate } from './cli'
-import { OPENFORT_VERSION } from './version'
+import { CLI_VERSION } from './version'
+import { telemetry } from './cli/telemetry'
+import { isVerbose, setVerboseLevel } from './cli/verboseLevel'
+
+dotenv.config({ path: './../.env', quiet: true })
 
 // RecoveryMethod and AuthProvider come from @openfort/react
 // but if we import them we include the whole package, increasing the bundle size from ~120kb to almost 700kb
@@ -16,15 +21,16 @@ const argv = mri<{
   theme?: Theme
   version?: boolean
   dashboard?: string | boolean
+  "verbose-debug"?: boolean
+  telemetry?: boolean
 }>(process.argv.slice(2), {
   alias: {
     h: 'help',
     t: 'template',
     o: 'overwrite',
     d: 'default',
+    V: 'verbose',
     v: 'version',
-    vb: 'verbose',
-    nv: 'no-validate',
   },
   boolean: [
     'help',
@@ -32,6 +38,7 @@ const argv = mri<{
     'verbose',
     'validate',
     'version',
+    'verbose-debug',
   ],
   string: [
     'dashboard',
@@ -45,6 +52,8 @@ const argv = mri<{
     default: false,
     dashboard: false,
     version: false,
+    telemetry: true,
+    "verbose-debug": false,
   },
 })
 
@@ -61,8 +70,10 @@ Options:
   -d, --default         Use default values for all inputs
   -t, --template        Template to use
   -v, --version         Version number
-  -vb, --verbose        Enable verbose mode
-  -nv, --no-validate    Disable input validation
+  -V, --verbose        Enable verbose mode
+
+  --no-validate        Disable input validation
+  --no-telemetry       Disable sending anonymous usage data
 `
 
 const defaultTargetDir = 'openfort-project'
@@ -76,20 +87,27 @@ async function init() {
     : undefined
   const argTemplate = argv.template
   const argOverwrite = argv.overwrite
-  const verbose = argv.verbose
   const validate = !!argv.validate
   const defaultValues = argv.default
   const dashboard = !!argv.dashboard ? argv.dashboard !== true ? String(argv.dashboard) : defaultDashboardUrl : false
 
-  // read version from package.json
+  setVerboseLevel(!!argv.verbose, !!argv["verbose-debug"]);
 
-  console.log(`\n`)
+  telemetry.enabled = argv.telemetry !== false;
+
+  // read version from package.json
 
   const version = argv.version
   if (version) {
-    console.log(`create-openfort version: ${OPENFORT_VERSION}`)
+    console.log(`create-openfort version: ${CLI_VERSION}`)
     return
   }
+
+  telemetry.send({
+    status: 'started',
+  });
+
+  console.log(`\n`)
 
   const help = argv.help
   if (help) {
@@ -99,9 +117,9 @@ async function init() {
 
   prompts.intro("Let's create a new Openfort project!")
 
-  if (verbose) {
+  if (isVerbose) {
     prompts.log.success("Verbose mode enabled")
-    prompts.log.info(`create-openfort version: ${OPENFORT_VERSION}`)
+    prompts.log.info(`create-openfort version: ${CLI_VERSION}`)
     // prompts.log.info("Arguments:")
     // Object.entries(argv).forEach(([key, value]) => {
     //   prompts.log.info(`${key}: ${value}`)
@@ -114,16 +132,16 @@ async function init() {
   }
 
   if (!validate)
-    prompts.log.warn("No validation will be performed on the input values.\nPlease make sure to provide valid values." + argTemplate)
+    prompts.log.warn("No validation will be performed on the input values.\nPlease make sure to provide valid values.")
 
-  const fileManager = await new FileManager({ verbose }).init({
+  const fileManager = await new FileManager().init({
     argTargetDir,
     argOverwrite,
     defaultTargetDir,
   })
   if (!fileManager || !fileManager.root) return;
 
-  if (argTemplate && verbose) {
+  if (argTemplate && isVerbose) {
     prompts.log.info(`Using template from argument: ${argTemplate}`)
   }
 
@@ -351,6 +369,7 @@ ${JSON.stringify(body, null, 2)}
   }
 
   const openfortPublic = await requestOpenfortPublic()
+  telemetry.projectId = openfortPublic
 
   let shieldPublishableKey = undefined
   let openfortSecret = undefined
@@ -368,7 +387,7 @@ ${JSON.stringify(body, null, 2)}
     shieldPublishableKey = await requestShieldPublishable()
   }
 
-  if (verbose)
+  if (isVerbose)
     prompts.log.info(`Using template: ${template}`)
 
   prompts.log.step(`Scaffolding project in ${fileManager.root}...`)
@@ -399,8 +418,9 @@ ${JSON.stringify(body, null, 2)}
     env.OPENFORT_THEME = theme
   }
 
-
-  // TODO: Add telemetry (posthog) --no-telemetry
+  telemetry.send({
+    status: 'completed',
+  });
 
   // TODO: Git init and commit first commit
 
