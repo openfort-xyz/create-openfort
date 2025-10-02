@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "dev": "unbuild --watch",
-    "test": "cd tests && node ./../index.js",
+    "test": "node -e \"require('fs').mkdirSync('tests', { recursive: true });\" && cd tests && node ./../index.js",
     "build": "unbuild && node build.js",
     "lint": "tsc --noEmit"
   },

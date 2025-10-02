@@ -9,8 +9,6 @@
   ],
   "scripts": {
     "dev": "yarn workspace create-openfort run dev",
-    "dev:template": "yarn workspace @openfort/template-transformer run dev",
-    "build:template": "yarn workspace @openfort/template-transformer run build",
     "test": "yarn workspace create-openfort run test",
     "build": "yarn workspaces foreach -A run build",
     "lint": "yarn workspaces foreach -A run lint"

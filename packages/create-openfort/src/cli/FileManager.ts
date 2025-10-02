@@ -36,10 +36,26 @@ function emptyDir(dir: string) {
   }
 }
 
-export async function cloneRepo(repo: string, targetDir: string) {
+export async function cloneRepo(repo: string, targetDir: string, { verbose }: { verbose?: boolean } = {}) {
   return await new Promise<void>((resolve, reject) => {
+    if (verbose) {
+      prompts.log.info(`Running: npx degit ${repo} ${targetDir}`);
+    }
+
     const child = spawn('npx', ['degit', repo, targetDir], {
       shell: true,
+    });
+
+    child.stdout.on('data', (data) => {
+      if (verbose) {
+        process.stdout.write(`\r[stdout]: ${data}`);
+      }
+    });
+
+    child.stderr.on('data', (data) => {
+      if (verbose) {
+        process.stdout.write(`\r[stderr]: ${data}`);
+      }
     });
 
     child.on('close', (code, s) => {
@@ -58,10 +74,26 @@ export async function cloneRepo(repo: string, targetDir: string) {
   });
 }
 
-export async function gitPick(repo: string, targetDir: string) {
+export async function gitPick(repo: string, targetDir: string, { verbose }: { verbose?: boolean } = {}) {
   return await new Promise<void>((resolve, reject) => {
+    if (verbose) {
+      prompts.log.info(`Running: npx gitpick ${repo} ${targetDir}`);
+    }
+
     const child = spawn('npx', ['gitpick', repo, targetDir], {
       shell: true,
+    });
+
+    child.stdout.on('data', (data) => {
+      if (verbose) {
+        process.stdout.write(`\r[stdout]: ${data}`);
+      }
+    });
+
+    child.stderr.on('data', (data) => {
+      if (verbose) {
+        process.stdout.write(`\r[stderr]: ${data}`);
+      }
     });
 
     child.on('close', (code, s) => {
@@ -262,9 +294,11 @@ export class FileManager {
       if (this.verbose) {
         prompts.log.info(`Cloning repo ${repo}`);
       }
+
       await gitPick(
         repo,
-        this.addSubfolders ? path.join(this.root, "frontend") : this.root
+        this.addSubfolders ? path.join(this.root, "frontend") : this.root,
+        { verbose: this.verbose }
       )
 
       if (this.verbose) {
@@ -304,7 +338,8 @@ export class FileManager {
       }
       await cloneRepo(
         'openfort-xyz/openfort-backend-quickstart',
-        this.addSubfolders ? path.join(this.root, "backend") : this.root
+        this.addSubfolders ? path.join(this.root, "backend") : this.root,
+        { verbose: this.verbose }
       )
 
       if (this.verbose) {

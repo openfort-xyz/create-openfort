@@ -31,7 +31,6 @@ const argv = mri<{
   string: [
     'dashboard',
     'template',
-    'template',
   ],
   default: {
     template: undefined,
