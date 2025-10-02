@@ -1,46 +1,14 @@
 import fs from 'node:fs';
-import path from 'node:path';
 
-const __dirname = path.resolve(path.dirname(''));
+const config = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 
-function copyDir(srcDir, destDir, ignoreFiles = []) {
-  fs.mkdirSync(destDir, { recursive: true });
-  for (const file of fs.readdirSync(srcDir)) {
-    const srcFile = path.resolve(srcDir, file);
-    const destFile = path.resolve(destDir, file);
+console.log(`Building create-openfort version ${config.version}`);
 
-    copy(srcFile, destFile, ignoreFiles);
-  }
-}
+const file = fs.readFileSync('./src/version.ts', 'utf8');
+const lines = file.split('\n');
+const versionLine = lines.findIndex((line) =>
+  line.includes('export const OPENFORT_VERSION = ')
+);
+lines[versionLine] = `export const OPENFORT_VERSION = '${config.version}';`;
 
-function copy(src, dest, ignoreFiles = []) {
-  if (ignoreFiles.some(ignore => ignore === src)) {
-    return;
-  }
-  const stat = fs.statSync(src);
-  if (stat.isDirectory()) {
-    copyDir(src, dest, ignoreFiles);
-  } else {
-    fs.copyFileSync(src, dest);
-  }
-}
-
-// Ensure the destination directory exists and copy the folder
-try {
-  // Get the source and destination paths
-  fs.rmSync(path.join(__dirname, 'dist/raw-templates'), { recursive: true, force: true });
-  copyDir(
-    path.join(__dirname, '../..', 'raw-templates'),
-    path.join(__dirname, 'dist', 'raw-templates')
-  );
-
-  fs.rmSync(path.join(__dirname, 'dist/updated-files'), { recursive: true, force: true });
-  copyDir(
-    path.join(__dirname, '../..', 'updated-files'),
-    path.join(__dirname, 'dist', 'updated-files')
-  );
-
-  console.log('Successfully copied templates to dist');
-} catch (err) {
-  console.error('Error copying folder:', err);
-}
+fs.writeFileSync('./src/version.ts', lines.join('\n'), 'utf8');

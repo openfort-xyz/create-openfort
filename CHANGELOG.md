@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.5] - 2025-10-02
+
+### Feat
+
+- Added version flag to display current version
+- Updated some naming and wording
+
 ## [0.0.4] - 2025-10-02
 
 ### Chore

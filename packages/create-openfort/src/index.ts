@@ -1,8 +1,9 @@
-import { Theme } from '@openfort/react'
+import type { Theme } from '@openfort/react'
 import mri from 'mri'
 import { cancel, FileManager, formatTargetDir, prompts, promptTemplate } from './cli'
+import { OPENFORT_VERSION } from './version'
 
-// RecoveryMethod and AuthProvider come from @openfort/openfort-kit 
+// RecoveryMethod and AuthProvider come from @openfort/react
 // but if we import them we include the whole package, increasing the bundle size from ~120kb to almost 700kb
 
 const argv = mri<{
@@ -13,20 +14,24 @@ const argv = mri<{
   validate?: boolean
   default?: boolean
   theme?: Theme
+  version?: boolean
   dashboard?: string | boolean
 }>(process.argv.slice(2), {
   alias: {
     h: 'help',
     t: 'template',
     o: 'overwrite',
-    v: 'verbose',
     d: 'default',
+    v: 'version',
+    vb: 'verbose',
+    nv: 'no-validate',
   },
   boolean: [
     'help',
     'overwrite',
     'verbose',
     'validate',
+    'version',
   ],
   string: [
     'dashboard',
@@ -39,6 +44,7 @@ const argv = mri<{
     validate: true,
     default: false,
     dashboard: false,
+    version: false,
   },
 })
 
@@ -46,20 +52,20 @@ const argv = mri<{
 const helpMessage = `\
 Usage: create-openfort [OPTION]... [DIRECTORY]
 
-Create a new Openfortkit project in TypeScript.
+Create a new Openfort project in TypeScript.
 With no arguments, start the CLI in interactive mode.
 
 Options:
   -h, --help            Show this help message and exit
   -o, --overwrite       Overwrite existing files
-  -v, --verbose         Enable verbose mode
   -d, --default         Use default values for all inputs
   -t, --template        Template to use
-
-  --no-validate     Disable input validation
+  -v, --version         Version number
+  -vb, --verbose        Enable verbose mode
+  -nv, --no-validate    Disable input validation
 `
 
-const defaultTargetDir = 'openfortkit-project'
+const defaultTargetDir = 'openfort-project'
 const defaultApiEndpoint = 'http://localhost:3110/api/protected-create-encryption-session'
 
 const defaultDashboardUrl = "https://dashboard.openfort.io";
@@ -75,18 +81,27 @@ async function init() {
   const defaultValues = argv.default
   const dashboard = !!argv.dashboard ? argv.dashboard !== true ? String(argv.dashboard) : defaultDashboardUrl : false
 
+  // read version from package.json
+
+  console.log(`\n`)
+
+  const version = argv.version
+  if (version) {
+    console.log(`create-openfort version: ${OPENFORT_VERSION}`)
+    return
+  }
+
   const help = argv.help
   if (help) {
     console.log(helpMessage)
     return
   }
 
-  console.log(`\n`)
-
-  prompts.intro("Let's create a new Openfortkit project!")
+  prompts.intro("Let's create a new Openfort project!")
 
   if (verbose) {
     prompts.log.success("Verbose mode enabled")
+    prompts.log.info(`create-openfort version: ${OPENFORT_VERSION}`)
     // prompts.log.info("Arguments:")
     // Object.entries(argv).forEach(([key, value]) => {
     //   prompts.log.info(`${key}: ${value}`)
@@ -272,20 +287,24 @@ ${JSON.stringify(body, null, 2)}
   const skRegex = new RegExp(`^sk_${keyPattern}$`);
   const pkRegex = new RegExp(`^pk_${keyPattern}$`);
   const uuidV4Regex = new RegExp(`^${uuidV4Pattern}$`);
+  const length44Regex = new RegExp(`^.{44}$`);
+
+  const validateInput = (value: string, pattern: RegExp, name: string) => {
+    if (!validate) return;
+    if (value === '-') return;
+    if (!value) {
+      return `${name} is required`
+    } else if (!pattern.test(value)) {
+      return `${name} is invalid`
+    }
+  }
 
   // Input Keys
   const requestOpenfortPublic = async () => {
     const publishableKey = await prompts.text({
       message: 'Openfort Publishable Key:',
       placeholder: 'pk...',
-      validate: (value) => {
-        if (!validate) return;
-        if (!value) {
-          return 'Openfort Publishable Key is required'
-        } else if (!pkRegex.test(value)) {
-          return 'Openfort Publishable Key is invalid'
-        }
-      }
+      validate: (value) => validateInput(value, pkRegex, 'Openfort Publishable Key')
     })
     if (prompts.isCancel(publishableKey)) throw cancel()
     return publishableKey
@@ -295,14 +314,7 @@ ${JSON.stringify(body, null, 2)}
     const openfortSecretResult = await prompts.text({
       message: 'Openfort Secret:',
       placeholder: 'sk_...',
-      validate: (value) => {
-        if (!validate) return;
-        if (!value) {
-          return 'Openfort Secret Key is required'
-        } else if (!skRegex.test(value)) {
-          return 'Openfort Secret Key is invalid'
-        }
-      }
+      validate: (value) => validateInput(value, skRegex, 'Openfort Secret Key')
     })
     if (prompts.isCancel(openfortSecretResult)) throw cancel()
     return openfortSecretResult
@@ -312,14 +324,7 @@ ${JSON.stringify(body, null, 2)}
     const result = await prompts.text({
       message: 'Shield Publishable Key:',
       placeholder: 'Your Shield Publishable Key',
-      validate: (value) => {
-        if (!validate) return;
-        if (!value) {
-          return 'Shield Publishable Key is required'
-        } else if (!uuidV4Regex.test(value)) {
-          return 'Shield Publishable Key is invalid'
-        }
-      }
+      validate: (value) => validateInput(value, uuidV4Regex, 'Shield Publishable Key')
     })
     if (prompts.isCancel(result)) throw cancel()
     return result
@@ -329,14 +334,7 @@ ${JSON.stringify(body, null, 2)}
     const shieldSecretResult = await prompts.text({
       message: 'Shield Secret:',
       placeholder: 'Your Shield Secret',
-      validate: (value) => {
-        if (!validate) return;
-        if (!value) {
-          return 'Shield Secret Key is required'
-        } else if (!uuidV4Regex.test(value)) {
-          return 'Shield Secret Key is invalid'
-        }
-      }
+      validate: (value) => validateInput(value, uuidV4Regex, 'Shield Secret Key')
     })
     if (prompts.isCancel(shieldSecretResult)) throw cancel()
     return shieldSecretResult
@@ -346,82 +344,28 @@ ${JSON.stringify(body, null, 2)}
     const shieldEncryptionShareResult = await prompts.text({
       message: 'Shield Encryption Share:',
       placeholder: 'Your Shield Encryption Share',
-      validate: (value) => {
-        if (!validate) return;
-        if (!value) {
-          return 'Shield Encryption Share is required'
-        } else if (value.length !== 44) {
-          return 'Shield Encryption Share is invalid'
-        }
-      }
+      validate: (value) => validateInput(value, length44Regex, 'Shield Encryption Share')
     })
     if (prompts.isCancel(shieldEncryptionShareResult)) throw cancel()
     return shieldEncryptionShareResult
   }
 
-
-  // let config: OpenfortWalletConfig | null = null
-
-  // if (createEmbeddedSigner) {
-  //   if (createb) {
-  //     await requestShieldEncryptionShare()
-  //     await requestShieldPublishable()
-
-  //     if (!shieldPublishableKey || !shieldEncryptionShare) {
-  //       throw cancel("Missing Shield Publishable Key or Shield Encryption Share")
-  //     }
-
-  //     env.SHIELD_PUBLISHABLE_KEY = shieldPublishableKey
-  //     env.SHIELD_ENCRYPTION_SHARE = shieldEncryptionShare
-
-  //   } else if (recoveryMethod === RecoveryMethod.AUTOMATIC) {
-  //     if (createBackend) {
-  //       await requestOpenfortSecret()
-  //       await requestShieldEncryptionShare()
-  //       await requestShieldPublishable()
-  //       await requestShieldSecret()
-  //     } else {
-  //       await requestShieldPublishable()
-  //     }
-
-  //     if (!shieldPublishableKey) {
-  //       throw cancel("Missing Shield Publishable Key")
-  //     }
-
-  //     env.SHIELD_PUBLISHABLE_KEY = shieldPublishableKey
-  //     env.API_ENDPOINT = apiEndpoint
-
-  //     config = {
-  //       createEmbeddedSigner: true,
-  //       embeddedSignerConfiguration: {
-  //         shieldPublishableKey: "_ENV_.SHIELD_PUBLISHABLE_KEY",
-  //         recoveryMethod: recoveryMethod,
-  //         createEncryptedSessionEndpoint: "_ENV_.API_ENDPOINT",
-  //       }
-  //     }
-  //   } else {
-  //     cancel("Invalid recovery method")
-  //   }
-  // } else {
-  //   config = {
-  //     linkWalletOnSignUp: true,
-  //   }
-  // }
-
-
-
   const openfortPublic = await requestOpenfortPublic()
 
-  const shieldPublishableKey = await requestShieldPublishable()
-
+  let shieldPublishableKey = undefined
   let openfortSecret = undefined
   let shieldSecret = undefined
   let shieldEncryptionShare = undefined
 
   if (createBackend) {
     openfortSecret = await requestOpenfortSecret()
+
+    shieldPublishableKey = await requestShieldPublishable()
     shieldEncryptionShare = await requestShieldEncryptionShare()
     shieldSecret = await requestShieldSecret()
+  } else {
+    // separate to ask shield and openfort keys together
+    shieldPublishableKey = await requestShieldPublishable()
   }
 
   if (verbose)
@@ -454,57 +398,6 @@ ${JSON.stringify(body, null, 2)}
   if (theme) {
     env.OPENFORT_THEME = theme
   }
-
-  // templateTransformer.copyTemplate("openfortkit");
-
-  // let configString = JSON.stringify(config, null, 2)
-
-  // const match = /"_ENV_\.(.*)"/
-  // let envVar = configString.match(match)
-
-  // while (envVar) {
-  //   if (verbose)
-  //     prompts.log.info(`Replacing ${envVar[0]} with ${templateTransformer.getEnvName(envVar[1])}`)
-
-  //   configString = configString.replace(match, templateTransformer.getEnvName(envVar[1]))
-  //   envVar = configString.match(match)
-  // }
-
-  // configString = configString.replace('"recoveryMethod": "automatic"', "recoveryMethod: RecoveryMethod.AUTOMATIC")
-  // configString = configString.replace('"recoveryMethod": "password"', "recoveryMethod: RecoveryMethod.PASSWORD")
-
-  // const providerToString = {
-  //   [AuthProvider.EMAIL]: 'AuthProvider.EMAIL',
-  //   [AuthProvider.GUEST]: 'AuthProvider.GUEST',
-  //   [AuthProvider.WALLET]: 'AuthProvider.WALLET',
-  //   [AuthProvider.FACEBOOK]: 'AuthProvider.FACEBOOK',
-  //   [AuthProvider.GOOGLE]: 'AuthProvider.GOOGLE',
-  //   [AuthProvider.TWITTER]: 'AuthProvider.TWITTER',
-  // }
-
-  // const providersString = "[\n  " +
-  //   providers.map((provider) => {
-  //     return providerToString[provider]
-  //   }).join(',\n  ')
-  //   + "\n]"
-
-
-  // fileManager.editFile(
-  //   filesSrc[template].providers,
-  //   (content) => {
-  //     return content
-  //       .replace(/WALLET_CONFIG/g, configString,)
-  //       .replace(/WALLET_CONNECT_PROJECT_ID/g, templateTransformer.getEnvName('WALLET_CONNECT_PROJECT_ID'))
-  //       .replace(/OPENFORT_PUBLISHABLE_KEY/g, templateTransformer.getEnvName('OPENFORT_PUBLISHABLE_KEY'))
-  //       .replace(/AUTH_PROVIDERS/g, providersString)
-  //       .replace(/VAR_THEME/g, theme)
-  //       .replace(/"([^"]+)": /g, '$1: ')
-  //   },
-  // )
-
-  // env.WALLET_CONNECT_PROJECT_ID = walletConnectProjectId
-
-
 
 
   // TODO: Add telemetry (posthog) --no-telemetry
