@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.6] - 2025-10-02
+
+### Feat
+
+- Added analytics telemetry (can be disabled with --no-telemetry)
+
 ## [0.0.5] - 2025-10-02
 
 ### Feat
