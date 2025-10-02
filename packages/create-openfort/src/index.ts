@@ -1,12 +1,9 @@
 import type { Theme } from '@openfort/react'
-import dotenv from 'dotenv'
 import mri from 'mri'
 import { cancel, FileManager, formatTargetDir, prompts, promptTemplate } from './cli'
 import { CLI_VERSION } from './version'
 import { telemetry } from './cli/telemetry'
 import { isVerbose, setVerboseLevel } from './cli/verboseLevel'
-
-dotenv.config({ path: './../.env', quiet: true })
 
 // RecoveryMethod and AuthProvider come from @openfort/react
 // but if we import them we include the whole package, increasing the bundle size from ~120kb to almost 700kb

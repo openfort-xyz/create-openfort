@@ -44,9 +44,6 @@ jobs:
 
       - name: Build
         run: yarn build
-        env:
-          POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
-          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
 
       - name: Lint
         run: yarn lint

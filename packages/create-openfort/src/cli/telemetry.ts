@@ -5,6 +5,9 @@ import { hostname, userInfo } from 'os';
 import { createHash } from 'crypto';
 import { isVerboseDebug } from './verboseLevel';
 
+const posthogKey = "phc_HosujvcO5QzmU2MVvZo8AxWV0pplTZJLr3jEd8dRVPE"
+const posthogHost = "https://analytics.openfort.xyz"
+
 const getAnonymousId = () => {
   // Combines hostname + username, hashed = anonymous but consistent
   const identifier = `${hostname()}-${userInfo().username}`;
@@ -32,13 +35,11 @@ class Telemetry {
   }) => {
     if (!this.enabled) return;
 
-    const key = process.env.POSTHOG_KEY;
-    const host = process.env.POSTHOG_HOST;
     if (isVerboseDebug) {
-      console.log(`Sending telemetry to ${host}`);
+      console.log(`Sending telemetry to ${posthogHost}`);
     }
 
-    if (!key || !host) return;
+    if (!posthogKey || !posthogHost) return;
 
     const fullProperties = {
       session_id: this.sessionId,
@@ -49,13 +50,13 @@ class Telemetry {
       cli_status: status,
       ...properties,
     };
-    const response = await fetch(`${host}/capture/`, {
+    const response = await fetch(`${posthogHost}/capture/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        api_key: key,
+        api_key: posthogKey,
         event: 'cli_tool_used',
         distinct_id: this.anonymousId,
         properties: fullProperties,

@@ -1,6 +1,6 @@
 {
   "name": "create-openfort",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "type": "module",
   "license": "MIT",
   "author": "Openfort (https://www.openfort.xyz)",
@@ -23,7 +23,6 @@
     "@openfort/react": "^0.0.17",
     "@types/cross-spawn": "^6.0.6",
     "cross-spawn": "^7.0.6",
-    "dotenv": "^17.2.3",
     "mri": "^1.2.0",
     "node-fetch": "^3.3.2",
     "picocolors": "^1.1.1",
