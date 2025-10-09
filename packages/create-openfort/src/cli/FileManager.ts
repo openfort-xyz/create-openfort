@@ -6,13 +6,13 @@ import { cancel, pkgFromUserAgent, PkgInfo } from "./utils";
 import { telemetry } from './telemetry';
 import { isVerbose } from './verboseLevel';
 
-function isValidPackageName(projectName: string) {
+export function isValidPackageName(projectName: string) {
   return /^(?:@[a-z\d\-*~][a-z\d\-*._~]*\/)?[a-z\d\-~][a-z\d\-._~]*$/.test(
     projectName,
   )
 }
 
-function toValidPackageName(projectName: string) {
+export function toValidPackageName(projectName: string) {
   return projectName
     .trim()
     .toLowerCase()
@@ -21,12 +21,12 @@ function toValidPackageName(projectName: string) {
     .replace(/[^a-z\d\-~]+/g, '-')
 }
 
-function isEmpty(path: string) {
+export function isEmpty(path: string) {
   const files = fs.readdirSync(path)
   return files.length === 0 || (files.length === 1 && files[0] === '.git')
 }
 
-function emptyDir(dir: string) {
+export function emptyDir(dir: string) {
   if (!fs.existsSync(dir)) {
     return
   }
