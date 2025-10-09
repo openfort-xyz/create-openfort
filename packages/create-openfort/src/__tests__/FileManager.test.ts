@@ -17,6 +17,7 @@ describe('FileManager helpers', () => {
       expect(isValidPackageName('mypackage')).toBe(true)
       expect(isValidPackageName('@scope/my-package')).toBe(true)
       expect(isValidPackageName('my-package-123')).toBe(true)
+      expect(isValidPackageName('a'.repeat(214))).toBe(true)
     })
 
     it('should reject invalid package names', () => {
@@ -24,6 +25,24 @@ describe('FileManager helpers', () => {
       expect(isValidPackageName('my package')).toBe(false) // spaces
       expect(isValidPackageName('my@package')).toBe(false) // @ in wrong place
       expect(isValidPackageName('')).toBe(false) // empty
+      expect(isValidPackageName('my-package.')).toBe(false) // trailing dot
+    })
+
+    it('should reject scoped names containing asterisks', () => {
+      expect(isValidPackageName('@open*scope/hello')).toBe(false)
+    })
+
+    it('should reject package names with trailing dots', () => {
+      expect(isValidPackageName('@viem/viem..')).toBe(false)
+      expect(isValidPackageName('package..')).toBe(false)
+    })
+
+    it('should reject package names that exceed npm length limit', () => {
+      expect(isValidPackageName('a'.repeat(215))).toBe(false)
+    })
+
+    it('should reject scopes ending with dots', () => {
+      expect(isValidPackageName('@scope./pkg')).toBe(false)
     })
   })
 
@@ -41,6 +60,11 @@ describe('FileManager helpers', () => {
       expect(toValidPackageName('my!package')).toBe('my-package')
       expect(toValidPackageName('my#package$')).toBe('my-package-') // Trailing special chars become -
       expect(toValidPackageName('my++package')).toBe('my-package')
+    })
+
+    it('should strip trailing dots and enforce max length', () => {
+      expect(toValidPackageName('package..')).toBe('package')
+      expect(toValidPackageName('a'.repeat(220))).toHaveLength(214)
     })
   })
 
@@ -475,4 +499,3 @@ VITE_SHIELD_PUBLISHABLE_KEY=`
     })
   })
 })
-

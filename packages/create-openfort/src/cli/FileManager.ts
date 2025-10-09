@@ -2,29 +2,16 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { prompts } from './prompts';
-import { cancel, pkgFromUserAgent, PkgInfo } from "./utils";
+import { cancel, pkgFromUserAgent, PkgInfo, isValidPackageName, toValidPackageName } from './utils';
 import { telemetry } from './telemetry';
 import { isVerbose } from './verboseLevel';
-import { 
-  TemplateTimeoutError, 
-  createCloneError, 
-  createSpawnError 
+import {
+  TemplateTimeoutError,
+  createCloneError,
+  createSpawnError,
 } from './errors';
 
-export function isValidPackageName(projectName: string) {
-  return /^(?:@[a-z\d\-*~][a-z\d\-*._~]*\/)?[a-z\d\-~][a-z\d\-._~]*$/.test(
-    projectName,
-  )
-}
-
-export function toValidPackageName(projectName: string) {
-  return projectName
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/^[._]/, '')
-    .replace(/[^a-z\d\-~]+/g, '-')
-}
+export { isValidPackageName, toValidPackageName } from './utils';
 
 export function isEmpty(path: string) {
   const files = fs.readdirSync(path)
