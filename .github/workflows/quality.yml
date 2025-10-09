@@ -11,19 +11,16 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install Node v20
-        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
+      - uses: actions/setup-node@v4.3.0
         with:
           node-version: 20
           cache: 'yarn'
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install deps
+      - name: Install Dependencies
         run: yarn
 
-      - name: Build the code
+      - name: Build Project
         run: yarn build
 
-      - name: Run ESLint
+      - name: Lint Code
         run: yarn lint
