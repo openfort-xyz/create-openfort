@@ -1,7 +1,3 @@
-// ============================================================================
-// Custom Error Classes
-// ============================================================================
-
 export class TemplateDownloadError extends Error {
   constructor(
     message: string,
@@ -25,10 +21,6 @@ export class TemplateTimeoutError extends TemplateDownloadError {
     this.name = 'TemplateTimeoutError';
   }
 }
-
-// ============================================================================
-// Error Detection and Categorization
-// ============================================================================
 
 interface ErrorCategory {
   pattern: RegExp;
