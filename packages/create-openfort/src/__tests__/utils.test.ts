@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { pkgFromUserAgent, getFullCustomCommand } from '../cli/utils'
 import { formatTargetDir } from '../cli/FileManager'
 

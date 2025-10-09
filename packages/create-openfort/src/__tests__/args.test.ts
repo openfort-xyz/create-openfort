@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import mri from 'mri'
 
 describe('CLI Arguments Parsing', () => {
@@ -173,7 +173,7 @@ describe('CLI Arguments Parsing', () => {
     })
 
     it('should use default values when not provided', () => {
-      const args = []
+      const args: string[] = []
       const argv = mri(args, {
         boolean: ['overwrite', 'verbose', 'validate'],
         default: {

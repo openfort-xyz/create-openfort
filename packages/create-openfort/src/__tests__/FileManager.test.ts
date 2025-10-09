@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
-import { FileManager, formatTargetDir, emptyDir, isEmpty, isValidPackageName, toValidPackageName, copyDir, editFile } from '../cli/FileManager'
+import { FileManager, emptyDir, isEmpty, isValidPackageName, toValidPackageName, copyDir, editFile } from '../cli/FileManager'
 import * as prompts from '@clack/prompts'
 
 // Mock modules
