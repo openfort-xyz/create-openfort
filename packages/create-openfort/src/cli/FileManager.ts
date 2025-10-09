@@ -293,6 +293,9 @@ export class FileManager {
       }
 
       spinner.stop('Failed to download template: ' + JSON.stringify(error));
+      
+      // Re-throw the error to stop execution
+      throw error;
     }
   }
 
@@ -364,6 +367,9 @@ export class FileManager {
         },
         status: 'error',
       });
+      
+      // Re-throw the error to stop execution
+      throw error;
     }
   }
 
