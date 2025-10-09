@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.12] - 2025-10-09
+
+### Fix
+
+- Re-throw errors in gitPick and createBackend to prevent execution from continuing after failures
+
+### Feat
+
+- Add comprehensive test suite with unit and integration tests
+
 ## [0.0.11] - 2025-10-02
 
 ### Feat
