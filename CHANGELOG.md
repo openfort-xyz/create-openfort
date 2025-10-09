@@ -7,10 +7,12 @@ All notable changes to this project will be documented in this file.
 ### Fix
 
 - Re-throw errors in gitPick and createBackend to prevent execution from continuing after failures
+- Fix package name validation
 
 ### Feat
 
 - Add comprehensive test suite with unit and integration tests
+- Add timeout to gitPick and createBackend
 
 ## [0.0.11] - 2025-10-02
 
