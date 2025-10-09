@@ -34,16 +34,3 @@ jobs:
       
       - name: Run tests
         run: yarn test
-      
-      - name: Generate coverage report
-        run: yarn test:coverage
-        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
-      
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
-        with:
-          files: ./coverage/coverage-final.json
-          flags: unittests
-          name: codecov-umbrella
-
