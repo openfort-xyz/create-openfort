@@ -1,26 +1,32 @@
 name: Quality Check
 on: [pull_request]
-env:
-  YARN_ENABLE_IMMUTABLE_INSTALLS: false
+
 jobs:
   lint:
     name: Quality Check
     runs-on: ubuntu-latest
+    env:
+      YARN_ENABLE_IMMUTABLE_INSTALLS: false
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4
 
-      - name: Install Node v16
-        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
-          cache: 'yarn'
+          node-version: 20
 
-      - name: Install deps
-        run: yarn
+      - name: Enable Corepack for Yarn 4
+        run: |
+          corepack enable
+          corepack prepare yarn@4.9.1 --activate
 
-      - name: Build the code
+      - name: Install Dependencies
+        run: yarn install
+
+      - name: Build
         run: yarn build
 
-      - name: Run ESLint
+      - name: Lint
         run: yarn lint

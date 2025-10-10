@@ -12,6 +12,44 @@ export interface PkgInfo {
   version: string
 }
 
+export const MAX_PACKAGE_NAME_LENGTH = 214;
+const PACKAGE_SEGMENT_PATTERN = /^[a-z\d~\-][a-z\d._~-]*$/;
+
+function isValidPackageSegment(segment: string) {
+  return PACKAGE_SEGMENT_PATTERN.test(segment) && !segment.endsWith('.')
+}
+
+export function isValidPackageName(projectName: string) {
+  if (!projectName) return false
+  if (projectName.length > MAX_PACKAGE_NAME_LENGTH) return false
+  if (projectName.includes('*')) return false
+  if (projectName.endsWith('.')) return false
+
+  if (projectName.startsWith('@')) {
+    const [scope, name, ...rest] = projectName.slice(1).split('/')
+    if (!scope || !name || rest.length > 0) return false
+    if (!isValidPackageSegment(scope) || !isValidPackageSegment(name)) {
+      return false
+    }
+    return true
+  }
+
+  return isValidPackageSegment(projectName)
+}
+
+export function toValidPackageName(projectName: string) {
+  const sanitized = projectName
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/^[._]/, '')
+    .replace(/\.+$/g, '')
+
+  return sanitized
+    .replace(/[^a-z\d\-~]+/g, '-')
+    .slice(0, MAX_PACKAGE_NAME_LENGTH)
+}
+
 export function pkgFromUserAgent(): PkgInfo | undefined {
   const userAgent = process.env.npm_config_user_agent
   if (!userAgent) return undefined

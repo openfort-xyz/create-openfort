@@ -2,31 +2,23 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { prompts } from './prompts';
-import { cancel, pkgFromUserAgent, PkgInfo } from "./utils";
+import { cancel, pkgFromUserAgent, PkgInfo, isValidPackageName, toValidPackageName } from './utils';
 import { telemetry } from './telemetry';
 import { isVerbose } from './verboseLevel';
+import {
+  TemplateTimeoutError,
+  createCloneError,
+  createSpawnError,
+} from './errors';
 
-function isValidPackageName(projectName: string) {
-  return /^(?:@[a-z\d\-*~][a-z\d\-*._~]*\/)?[a-z\d\-~][a-z\d\-._~]*$/.test(
-    projectName,
-  )
-}
+export { isValidPackageName, toValidPackageName } from './utils';
 
-function toValidPackageName(projectName: string) {
-  return projectName
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/^[._]/, '')
-    .replace(/[^a-z\d\-~]+/g, '-')
-}
-
-function isEmpty(path: string) {
+export function isEmpty(path: string) {
   const files = fs.readdirSync(path)
   return files.length === 0 || (files.length === 1 && files[0] === '.git')
 }
 
-function emptyDir(dir: string) {
+export function emptyDir(dir: string) {
   if (!fs.existsSync(dir)) {
     return
   }
@@ -38,7 +30,11 @@ function emptyDir(dir: string) {
   }
 }
 
-export async function cloneRepo(repo: string, targetDir: string, { verbose }: { verbose?: boolean } = {}) {
+export async function cloneRepo(
+  repo: string, 
+  targetDir: string, 
+  { verbose, timeout = 60000 }: { verbose?: boolean; timeout?: number } = {}
+) {
   return await new Promise<void>((resolve, reject) => {
     if (verbose) {
       prompts.log.info(`Running: npx degit ${repo} ${targetDir}`);
@@ -48,6 +44,25 @@ export async function cloneRepo(repo: string, targetDir: string, { verbose }: { 
       shell: true,
     });
 
+    let stderr = '';
+    let hasResolved = false;
+
+    const handleResolve = (timeoutId: NodeJS.Timeout) => {
+      if (hasResolved) return false;
+      hasResolved = true;
+      clearTimeout(timeoutId);
+      return true;
+    };
+
+    // Set timeout to prevent hanging forever
+    const timeoutId = setTimeout(() => {
+      if (!hasResolved) {
+        hasResolved = true;
+        child.kill();
+        reject(new TemplateTimeoutError(timeout / 1000));
+      }
+    }, timeout);
+
     child.stdout.on('data', (data) => {
       if (verbose) {
         process.stdout.write(`\r[CLONE_REPO stdout]: ${data}`);
@@ -55,23 +70,25 @@ export async function cloneRepo(repo: string, targetDir: string, { verbose }: { 
     });
 
     child.stderr.on('data', (data) => {
+      stderr += data.toString();
       if (verbose) {
         process.stdout.write(`\r[CLONE_REPO stderr]: ${data}`);
       }
     });
 
-    child.on('close', (code, s) => {
-      // prompts.log.info(`Cloned ${repo} to ${targetDir} with code ${code} and signal ${s}`);
+    child.on('close', (code) => {
+      if (!handleResolve(timeoutId)) return;
 
       if (code === 0) {
-        resolve(); // Process completed successfully
+        resolve();
       } else {
-        reject(new Error(`Process exited with code ${code}`));
+        reject(createCloneError(code ?? 1, stderr));
       }
     });
 
     child.on('error', (err) => {
-      reject(err); // Handle errors
+      if (!handleResolve(timeoutId)) return;
+      reject(createSpawnError(err));
     });
   });
 }
@@ -279,9 +296,11 @@ export class FileManager {
       spinner.stop('Template download completed successfully! 🚀');
     } catch (error) {
       // Cleanup
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
       telemetry.send({
         properties: {
-          error: JSON.stringify(error),
+          error: errorMessage,
           repo,
           repoPath,
         },
@@ -292,7 +311,11 @@ export class FileManager {
         fs.rmSync(tmpDir, { recursive: true, force: true })
       }
 
-      spinner.stop('Failed to download template: ' + JSON.stringify(error));
+      // Provide user-friendly error message
+      spinner.stop(`Failed to download template.\n${errorMessage}`);
+      
+      // Re-throw the error to stop execution
+      throw error;
     }
   }
 
@@ -357,13 +380,17 @@ export class FileManager {
 
       spinner.stop('Backend creation completed successfully! 🚀');
     } catch (error) {
-      spinner.stop('Failed to create backend: ' + JSON.stringify(error));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      spinner.stop(`Failed to create backend.\n${errorMessage}`);
       telemetry.send({
         properties: {
-          error: JSON.stringify(error),
+          error: errorMessage,
         },
         status: 'error',
       });
+      
+      // Re-throw the error to stop execution
+      throw error;
     }
   }
 
