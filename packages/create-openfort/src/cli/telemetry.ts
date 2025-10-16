@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import { hostname, userInfo } from 'node:os'
 import fetch from 'node-fetch'
 import { CLI_VERSION } from '../version'
@@ -25,7 +25,7 @@ class Telemetry {
 
   constructor() {
     this.anonymousId = getAnonymousId()
-    this.sessionId = Math.random().toString(36).substring(2, 15)
+    this.sessionId = randomBytes(8).toString('hex')
   }
 
   send = async ({
