@@ -10,6 +10,7 @@ import {
 import {
   emptyDir,
   type FileManager,
+  fileManager,
   formatTargetDir,
   isEmpty,
   isValidPackageName,
@@ -17,7 +18,14 @@ import {
   toValidPackageName,
 } from './FileManager'
 import { prompts } from './prompts'
-import { canReadWriteDir, downloadAndExtractGitRepo, loadEnvExamples, parseTemplate, replaceInFile } from './template'
+import {
+  canReadWriteDir,
+  downloadAndExtractGitRepo,
+  loadEnvExamples,
+  parseTemplate,
+  promptTemplate,
+  replaceInFile,
+} from './template'
 import { cancel, copy, type PkgInfo } from './utils'
 
 export {
@@ -32,6 +40,7 @@ export {
   dim,
   downloadAndExtractGitRepo,
   emptyDir,
+  fileManager,
   formatTargetDir,
   green,
   isEmpty,
@@ -40,6 +49,7 @@ export {
   loadEnvExamples,
   parseTemplate,
   pkgFromUserAgent,
+  promptTemplate,
   prompts,
   red,
   replaceInFile,
