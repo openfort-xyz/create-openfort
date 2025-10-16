@@ -2,65 +2,85 @@
 
 ## Project Overview
 
-`create-openfort` is a CLI tool for scaffolding new Openfort projects. It's a monorepo managed with Yarn workspaces that provides an interactive CLI to help developers quickly bootstrap Openfort applications.
+`create-openfort` is a CLI tool for scaffolding new Openfort projects. It's a monorepo managed with pnpm workspaces that provides an interactive CLI to help developers quickly bootstrap Openfort applications.
 
 ## Setup Commands
 
-- Install dependencies: `yarn`
-- Start development mode: `yarn dev`
-- Run all tests: `yarn test`
-- Build all packages: `yarn build`
-- Run linter: `yarn lint`
+- Install dependencies: `pnpm install`
+- Start development mode: `pnpm dev`
+- Run all tests: `pnpm test`
+- Run tests in watch mode: `pnpm test:watch`
+- Generate coverage report: `pnpm test:coverage`
+- Build all packages: `pnpm build`
+- Check linting and formatting: `pnpm check`
+- Check TypeScript types: `pnpm check:types`
+- Check for unused code: `pnpm check:unused`
+- Clean build artifacts: `pnpm clean`
 
 ### Package-Specific Commands
 
 When working in the `packages/create-openfort` directory:
 
-- Build with watch mode: `yarn dev` (uses unbuild)
-- Run tests: `yarn test`
-- Run tests in watch mode: `yarn test:watch`
-- Run tests with UI: `yarn test:ui`
-- Generate coverage report: `yarn test:coverage`
-- Run integration test: `yarn test:integration`
-- Type checking: `yarn lint`
+- Build with watch mode: `pnpm dev` (uses unbuild)
+- Run tests: `pnpm test`
+- Run tests in watch mode: `pnpm test:watch`
+- Run tests with UI: `pnpm test:ui`
+- Generate coverage report: `pnpm test:coverage`
+- Run integration test: `pnpm test:integration`
+- Type checking: `pnpm lint`
 
 ## Project Structure
 
 ```
 create-openfort/
+├── .changeset/               # Changeset configuration
+│   ├── config.json          # Changeset settings
+│   └── README.md
+├── .github/
+│   ├── actions/
+│   │   └── install-dependencies/ # Reusable action for CI
+│   └── workflows/
+│       ├── verify.yml       # CI checks (lint, test, build, audit)
+│       └── release.yml      # Release workflow
 ├── packages/
-│   └── create-openfort/          # Main CLI package
+│   └── create-openfort/     # Main CLI package
 │       ├── src/
-│       │   ├── cli/              # CLI-related modules
-│       │   │   ├── args.ts       # Argument parsing
-│       │   │   ├── colors.ts     # Terminal colors
+│       │   ├── cli/         # CLI-related modules
+│       │   │   ├── args.ts  # Argument parsing
+│       │   │   ├── colors.ts # Terminal colors
 │       │   │   ├── FileManager.ts # File operations
-│       │   │   ├── index.ts      # CLI entry point
-│       │   │   ├── prompts.ts    # Interactive prompts
-│       │   │   ├── telemetry.ts  # Analytics
-│       │   │   ├── template.ts   # Template handling
-│       │   │   ├── utils.ts      # Utilities
+│       │   │   ├── index.ts # CLI entry point
+│       │   │   ├── prompts.ts # Interactive prompts
+│       │   │   ├── telemetry.ts # Analytics
+│       │   │   ├── template.ts # Template handling
+│       │   │   ├── utils.ts # Utilities
 │       │   │   └── verboseLevel.ts # Logging levels
-│       │   ├── __tests__/        # Test files
+│       │   ├── __tests__/   # Test files
 │       │   │   ├── __fixtures__/ # Shared test data
-│       │   │   ├── setup.ts      # Global test setup
-│       │   │   └── *.test.ts     # Test files
-│       │   ├── index.ts          # Package entry
-│       │   └── version.ts        # Version info
-│       ├── dist/                 # Build output
-│       ├── index.js              # CLI executable
+│       │   │   ├── setup.ts # Global test setup
+│       │   │   └── *.test.ts # Test files
+│       │   ├── index.ts     # Package entry
+│       │   └── version.ts   # Version info
+│       ├── dist/            # Build output
+│       ├── index.js         # CLI executable
 │       └── package.json
-├── package.json                  # Root package.json
+├── biome.json               # Biome configuration
+├── pnpm-workspace.yaml      # pnpm workspace config
+├── package.json             # Root package.json
 └── README.md
 ```
 
 ## Technology Stack
 
 - **Language**: TypeScript (strict mode)
-- **Runtime**: Node.js ^18.0.0 || ^20.0.0 || >=22.0.0
-- **Package Manager**: Yarn 4.9.1 (workspaces enabled)
+- **Runtime**: Node.js >=22.9
+- **Package Manager**: pnpm 10.16.1 (workspaces enabled)
 - **Build Tool**: unbuild
 - **Testing Framework**: Vitest
+- **Linter & Formatter**: Biome
+- **Unused Code Detection**: Knip
+- **Release Management**: Changesets
+- **Pre-commit Hooks**: simple-git-hooks
 - **CLI Framework**: @clack/prompts
 - **Dependencies**: 
   - cross-spawn (process spawning)
@@ -75,7 +95,33 @@ create-openfort/
 - Use async/await for asynchronous operations
 - Descriptive variable and function names
 - Keep functions small and focused
-- Follow existing patterns in the codebase
+- Follow Biome formatting rules (single quotes, 2 space indent, 120 line width)
+- Organize imports automatically
+
+## Linting and Formatting
+
+The project uses **Biome** for linting and formatting:
+
+```bash
+# Check and fix all issues
+pnpm check
+
+# Only check without fixing
+biome check
+
+# Format specific files
+biome format --write src/
+```
+
+### Biome Configuration
+
+Configuration is in `biome.json`:
+- Line width: 120
+- Indent: 2 spaces
+- Quotes: single
+- Semicolons: as needed
+- Trailing commas: ES5
+- Auto-organize imports
 
 ## Testing Instructions
 
@@ -87,24 +133,30 @@ The project uses **Vitest** for all testing. Tests are located in `src/__tests__
 
 ```bash
 # From root
-yarn test
+pnpm test
+
+# From root with watch mode
+pnpm test:watch
+
+# From root with coverage
+pnpm test:coverage
 
 # From packages/create-openfort
-yarn test                    # Run all tests once
-yarn test:watch              # Watch mode for development
-yarn test:ui                 # Open Vitest UI
-yarn test:coverage           # Generate coverage report
-yarn test:integration        # Run real CLI integration test
+pnpm test                    # Run all tests once
+pnpm test:watch              # Watch mode for development
+pnpm test:ui                 # Open Vitest UI
+pnpm test:coverage           # Generate coverage report
+pnpm test:integration        # Run real CLI integration test
 ```
 
 ### Running Specific Tests
 
 ```bash
 # Run a specific test file
-yarn test FileManager.test.ts
+pnpm test FileManager.test.ts
 
 # Run tests matching a pattern
-yarn test -t "should format target directory"
+pnpm test -t "should format target directory"
 ```
 
 ### Coverage Goals
@@ -115,7 +167,7 @@ Maintain these minimum coverage thresholds:
 - **Functions**: > 80%
 - **Lines**: > 80%
 
-View coverage report: `yarn test:coverage` then open `coverage/index.html`
+View coverage report: `pnpm test:coverage` then open `coverage/index.html`
 
 ### Writing Tests
 
@@ -135,45 +187,126 @@ View coverage report: `yarn test:coverage` then open `coverage/index.html`
 
 ## Build Process
 
-- **Development**: `yarn dev` - Uses unbuild in watch mode
-- **Production**: `yarn build` - Runs unbuild then post-build script (build.js)
+- **Development**: `pnpm dev` - Uses unbuild in watch mode
+- **Production**: `pnpm build` - Runs unbuild then post-build script (build.js)
 - Output directory: `dist/`
 - Entry point: `index.js` (CLI executable with shebang)
 
 ## Development Workflow
 
 1. Make changes in `src/`
-2. Run `yarn dev` for watch mode
-3. Test changes with `yarn test` or `yarn test:watch`
-4. Verify types with `yarn lint`
-5. Ensure all tests pass before committing
-6. Check coverage is maintained above 80%
+2. Run `pnpm dev` for watch mode
+3. Test changes with `pnpm test` or `pnpm test:watch`
+4. Verify formatting with `pnpm check` (runs automatically on pre-commit)
+5. Verify types with `pnpm check:types`
+6. Ensure all tests pass before committing
+7. Check coverage is maintained above 80%
+
+## Pre-commit Hooks
+
+The project uses **simple-git-hooks** for pre-commit checks:
+
+- Automatically runs `pnpm check` before each commit
+- Ensures code is formatted and linted
+- Setup runs automatically after `pnpm install`
+
+## Unused Code Detection
+
+The project uses **Knip** to detect unused files, dependencies, and exports:
+
+```bash
+# Check for unused code
+pnpm check:unused
+
+# Check in production mode (used in CI)
+pnpm knip --production
+```
+
+Configuration is in the root `package.json` under the `knip` key.
+
+## Release Workflow
+
+The project uses **Changesets** for version management and releases:
+
+### Creating a Changeset
+
+When making changes that should be included in the next release:
+
+```bash
+pnpm changeset
+```
+
+Follow the prompts to:
+1. Select which packages changed (major, minor, or patch)
+2. Write a summary of the changes
+
+This creates a markdown file in `.changeset/` that will be used to generate changelogs.
+
+### Release Process
+
+1. Developer creates PR with changes and a changeset
+2. PR is reviewed and merged to `main`
+3. GitHub Actions automatically creates a "Version Package" PR
+4. When the Version Package PR is merged:
+   - Package versions are updated
+   - CHANGELOG.md is updated
+   - Package is published to NPM
+   - GitHub release is created
+
+### Manual Release Commands
+
+```bash
+# Bump versions based on changesets
+pnpm changeset:version
+
+# Publish to NPM (requires NPM token)
+pnpm changeset:publish
+```
+
+## CI/CD Workflows
+
+### Verify Workflow (`.github/workflows/verify.yml`)
+
+Runs on all pull requests and checks:
+- **Audit**: Security vulnerabilities with `pnpm audit`
+- **Build**: Builds the project and checks for unused code with Knip
+- **Lint**: Runs Biome checks for formatting and linting
+- **TypeScript**: Type checks the entire codebase
+- **Test**: Runs all tests and generates coverage
+
+### Release Workflow (`.github/workflows/release.yml`)
+
+Runs on pushes to `main` branch:
+- Runs all verify checks
+- Creates Version Package PR via Changesets
+- Publishes to NPM when Version Package PR is merged
 
 ## Debugging
 
-- Use `yarn test:ui` for interactive test debugging
-- Use `yarn test:watch` to re-run tests on file changes
+- Use `pnpm test:ui` for interactive test debugging
+- Use `pnpm test:watch` to re-run tests on file changes
 - Check build output in `dist/` directory
-- Use `yarn test:integration` to test the CLI in a real environment
+- Use `pnpm test:integration` to test the CLI in a real environment
 
 ## Environment
 
-- **Git Branch**: Currently on `fix/downloading-template`
-- **Working Tree**: Clean (no uncommitted changes)
+- **Git Branch**: Currently on `main`
+- **Node Version**: LTS (specified in `.nvmrc`)
+- **Package Manager**: pnpm 10.16.1
 
 ## Package Management
 
-- Uses Yarn workspaces (v4.9.1)
+- Uses pnpm workspaces (v10.16.1)
 - Main package is in `packages/create-openfort/`
-- Run workspace-specific commands: `yarn workspace create-openfort run <script>`
-- Install dependencies at root level: `yarn`
+- Run workspace-specific commands: `pnpm --filter create-openfort <script>`
+- Install dependencies at root level: `pnpm install`
 
 ## CLI Usage
 
 The built CLI can be used via:
 ```bash
 # From npm (when published)
-yarn create openfort
+pnpm create openfort
 
 # Local development
 node packages/create-openfort/index.js
@@ -182,26 +315,46 @@ node packages/create-openfort/index.js
 ## Common Tasks
 
 ### Add a new dependency
+
 ```bash
-cd packages/create-openfort
-yarn add <package-name>
+# Add to root
+pnpm add -w <package-name>
+
+# Add to specific package
+pnpm --filter create-openfort add <package-name>
 ```
 
 ### Update dependencies
+
 ```bash
-yarn
+pnpm install
 ```
 
 ### Clean build artifacts
+
 ```bash
+pnpm clean
+# or
 rm -rf packages/create-openfort/dist
-yarn build
 ```
 
 ### View test coverage details
+
 ```bash
-yarn test:coverage
+pnpm test:coverage
 open coverage/index.html
+```
+
+### Check for unused code
+
+```bash
+pnpm check:unused
+```
+
+### Audit dependencies for vulnerabilities
+
+```bash
+pnpm audit --audit-level=moderate
 ```
 
 ## Telemetry
@@ -214,12 +367,17 @@ The CLI includes telemetry tracking (see `src/cli/telemetry.ts`). Be mindful whe
 - All files must have proper exports for testing
 - Mock external dependencies in tests (fs, child_process, etc.)
 - Keep the CLI interactive experience smooth with @clack/prompts
-- Maintain backward compatibility with Node.js 18+
+- Maintain backward compatibility with Node.js 22+
+- Use pnpm exclusively (enforced via preinstall script)
+- Run `pnpm check` before committing (or let pre-commit hook handle it)
+- Create changesets for all user-facing changes
 
 ## Resources
 
 - [Vitest Documentation](https://vitest.dev/)
 - [unbuild Documentation](https://github.com/unjs/unbuild)
 - [@clack/prompts Documentation](https://www.npmjs.com/package/@clack/prompts)
-- [TESTING.md](packages/create-openfort/TESTING.md) - Comprehensive testing guide
-
+- [Biome Documentation](https://biomejs.dev/)
+- [Knip Documentation](https://knip.dev/)
+- [Changesets Documentation](https://github.com/changesets/changesets)
+- [pnpm Documentation](https://pnpm.io/)
