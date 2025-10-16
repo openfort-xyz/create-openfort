@@ -1,3 +1,9 @@
+# pnpm
+node_modules
+.pnpm-store
+pnpm-debug.log*
+
+# yarn
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -6,7 +12,6 @@
 !.yarn/versions
 
 # dependencies
-node_modules
 /.pnp
 .pnp.js
 

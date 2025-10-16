@@ -1,7 +1,6 @@
-
-import { cyan, green, yellow } from './colors';
-import { prompts } from './prompts';
-import { cancel } from './utils';
+import { cyan, green, yellow } from './colors'
+import { prompts } from './prompts'
+import { cancel } from './utils'
 
 type ColorFunc = (str: string | number) => string
 type Template = {
@@ -15,24 +14,24 @@ export const TEMPLATES: Template[] = [
   {
     name: 'openfort-ui',
     display: 'Openfort UI',
-    hint: "default",
+    hint: 'default',
     color: cyan,
   },
   {
     name: 'headless',
     display: 'Headless UI',
-    hint: "custom, unstyled",
+    hint: 'custom, unstyled',
     color: green,
   },
   {
     name: 'firebase',
     display: 'Third party auth',
-    hint: "with Firebase",
+    hint: 'with Firebase',
     color: yellow,
   },
 ]
 
-export const DEFAULT_AVAILABLE_TEMPLATES = TEMPLATES.map(f => f.name)
+export const DEFAULT_AVAILABLE_TEMPLATES = TEMPLATES.map((f) => f.name)
 
 export async function promptTemplate({
   argTemplate,
@@ -43,7 +42,7 @@ export async function promptTemplate({
 }) {
   let template = argTemplate
   let hasInvalidArgTemplate = false
-  if (argTemplate && (!TEMPLATES.some(f => f.name === argTemplate) || !availableTemplates.includes(argTemplate))) {
+  if (argTemplate && (!TEMPLATES.some((f) => f.name === argTemplate) || !availableTemplates.includes(argTemplate))) {
     template = undefined
     hasInvalidArgTemplate = true
   }

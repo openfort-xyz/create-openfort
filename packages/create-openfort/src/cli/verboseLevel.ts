@@ -1,7 +1,7 @@
-export let isVerbose = false;
-export let isVerboseDebug = false;
+export let isVerbose = false
+export let isVerboseDebug = false
 
 export function setVerboseLevel(verbose: boolean, debug: boolean) {
-  isVerbose = verbose || debug;
-  isVerboseDebug = debug;
+  isVerbose = verbose || debug
+  isVerboseDebug = debug
 }

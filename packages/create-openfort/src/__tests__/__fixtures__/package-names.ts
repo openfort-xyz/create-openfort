@@ -39,7 +39,7 @@ export const INVALID_PACKAGE_NAMES = [
   'my-package!', // ends with special char
 ]
 
-export const NAMES_TO_CONVERT: Array<[string, string]> = [
+export const NAMES_TO_CONVERT: [string, string][] = [
   ['My Package', 'my-package'],
   ['MY_PACKAGE', 'my_package'],
   ['  package  ', 'package'],
@@ -62,6 +62,5 @@ export const EDGE_CASE_PACKAGE_NAMES = [
   'ab',
   'abc',
   '@scope/a',
-  'package-with-214-chars-' + 'a'.repeat(200), // Very long name
+  `package-with-214-chars-${'a'.repeat(200)}`, // Very long name
 ]
-
