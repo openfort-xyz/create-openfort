@@ -6,16 +6,18 @@
   "type": "module",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "postinstall": "simple-git-hooks",
+    "postinstall": "git config --unset core.hooksPath 2>/dev/null || true && simple-git-hooks && ./.husky/install_gitleaks.sh",
     "dev": "pnpm --filter create-openfort dev",
     "test": "pnpm --filter create-openfort test",
     "test:watch": "pnpm --filter create-openfort test:watch",
     "test:coverage": "pnpm --filter create-openfort test:coverage",
     "build": "pnpm -r --filter create-openfort build",
     "check": "biome check --write --unsafe",
+    "check:repo": "sherif",
     "check:types": "tsc --noEmit",
     "check:unused": "pnpm clean && knip",
     "clean": "rm -rf packages/create-openfort/dist",
+    "scan:secrets": "./.husky/run_gitleaks.sh",
     "changeset": "changeset",
     "changeset:version": "pnpm install --lockfile-only && changeset version",
     "changeset:publish": "pnpm build && changeset publish"
@@ -33,12 +35,13 @@
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.34.0",
     "rollup-plugin-visualizer": "^5.5.4",
+    "sherif": "^0.8.4",
     "simple-git-hooks": "^2.13.1",
     "tslib": "^1.9.3",
     "typescript": "^5.0.4"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm check"
+    "pre-commit": "./.husky/run_gitleaks.sh && pnpm check"
   },
   "packageManager": "pnpm@10.16.1",
   "engines": {
@@ -47,6 +50,7 @@
   "knip": {
     "ignore": [
       ".github/**",
+      ".husky/**",
       "**/dist/**",
       "**/node_modules/**",
       "**/coverage/**",
@@ -54,13 +58,15 @@
     ],
     "ignoreBinaries": [
       "dev",
-      "only-allow"
+      "only-allow",
+      "simple-git-hooks"
     ],
     "ignoreDependencies": [
       "@biomejs/biome",
       "@changesets/changelog-github",
       "@changesets/cli",
       "simple-git-hooks",
+      "sherif",
       "knip",
       "rimraf",
       "rollup",

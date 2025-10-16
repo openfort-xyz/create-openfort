@@ -21,6 +21,9 @@ jobs:
       - name: Run security audit
         run: pnpm audit --audit-level=moderate
 
+      - name: Check repo
+        run: pnpm check:repo
+
   build:
     name: Build
     runs-on: ubuntu-latest

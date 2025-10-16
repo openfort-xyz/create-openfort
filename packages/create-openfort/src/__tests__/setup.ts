@@ -1,4 +1,4 @@
-import { vi, afterEach } from 'vitest'
+import { afterEach, vi } from 'vitest'
 
 // Mock console methods to avoid noise in test output
 global.console = {
@@ -13,4 +13,3 @@ global.console = {
 afterEach(() => {
   vi.clearAllMocks()
 })
-

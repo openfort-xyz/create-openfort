@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import path from 'node:path'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FileManager } from '../cli/FileManager'
 
 vi.mock('node:child_process')
@@ -12,7 +12,7 @@ describe('Integration Tests', () => {
 
     beforeEach(() => {
       vi.clearAllMocks()
-      
+
       fileManager = new FileManager()
       testRoot = '/test/openfort-project'
     })
@@ -21,7 +21,7 @@ describe('Integration Tests', () => {
       fileManager.root = testRoot
       fileManager.packageName = 'openfort-project'
       fileManager.targetDir = 'openfort-project'
-      
+
       expect(fileManager.isInitialized()).toBe(true)
       expect(fileManager.root).toBe(testRoot)
       expect(fileManager.packageName).toBe('openfort-project')
@@ -34,7 +34,7 @@ describe('Integration Tests', () => {
       fileManager.packageName = 'openfort-project'
       fileManager.targetDir = 'openfort-project'
       fileManager.addSubfolders = false
-      
+
       expect(fileManager.isInitialized()).toBe(true)
       expect(fileManager.addSubfolders).toBe(false)
       expect(fileManager.getFilePath('package.json')).toBe(path.join(testRoot, 'package.json'))
@@ -45,7 +45,7 @@ describe('Integration Tests', () => {
       fileManager.packageName = 'openfort-project'
       fileManager.targetDir = 'openfort-project'
       fileManager.addSubfolders = true
-      
+
       expect(fileManager.isInitialized()).toBe(true)
       expect(fileManager.addSubfolders).toBe(true)
       expect(fileManager.getFilePath('package.json')).toBe(path.join(testRoot, 'frontend', 'package.json'))
@@ -88,28 +88,28 @@ describe('Integration Tests', () => {
     it('should extract suffix correctly from keys', () => {
       const key = 'NEXT_PUBLIC_OPENFORT_PUBLISHABLE_KEY'
       const suffix = key.includes('_') ? key.split('_').slice(1).join('_') : key
-      
+
       expect(suffix).toBe('PUBLIC_OPENFORT_PUBLISHABLE_KEY')
     })
 
     it('should extract suffix from VITE prefixed keys', () => {
       const key = 'VITE_SHIELD_PUBLISHABLE_KEY'
       const suffix = key.includes('_') ? key.split('_').slice(1).join('_') : key
-      
+
       expect(suffix).toBe('SHIELD_PUBLISHABLE_KEY')
     })
 
     it('should handle keys without prefix', () => {
       const key = 'SIMPLE_KEY'
       const suffix = key.includes('_') ? key.split('_').slice(1).join('_') : key
-      
+
       expect(suffix).toBe('KEY')
     })
 
     it('should handle keys with no underscores', () => {
       const key = 'SIMPLEKEY'
       const suffix = key.includes('_') ? key.split('_').slice(1).join('_') : key
-      
+
       expect(suffix).toBe('SIMPLEKEY')
     })
 
@@ -117,7 +117,7 @@ describe('Integration Tests', () => {
       const key = 'NEXT_PUBLIC_OPENFORT_PUBLISHABLE_KEY'
       const parts = key.split('_')
       const suffix = parts.slice(1).join('_')
-      
+
       expect(suffix).toBe('PUBLIC_OPENFORT_PUBLISHABLE_KEY')
       expect(parts.length).toBe(5)
     })
@@ -159,4 +159,3 @@ describe('Integration Tests', () => {
     })
   })
 })
-

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { pkgFromUserAgent, getFullCustomCommand } from '../cli/utils'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { formatTargetDir } from '../cli/FileManager'
+import { getFullCustomCommand, pkgFromUserAgent } from '../cli/utils'
 
 describe('Utils', () => {
   describe('formatTargetDir', () => {
@@ -158,4 +158,3 @@ describe('Utils', () => {
     })
   })
 })
-
