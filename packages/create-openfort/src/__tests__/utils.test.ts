@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { pkgFromUserAgent, getFullCustomCommand } from '../cli/utils'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { formatTargetDir } from '../cli/FileManager'
+import { getFullCustomCommand, pkgFromUserAgent } from '../cli/utils'
 
 describe('Utils', () => {
   describe('formatTargetDir', () => {
@@ -54,14 +54,6 @@ describe('Utils', () => {
       })
     })
 
-    it('should parse yarn user agent', () => {
-      process.env.npm_config_user_agent = 'yarn/1.22.19 npm/? node/v18.12.0 darwin x64'
-      expect(pkgFromUserAgent()).toEqual({
-        name: 'yarn',
-        version: '1.22.19',
-      })
-    })
-
     it('should parse pnpm user agent', () => {
       process.env.npm_config_user_agent = 'pnpm/7.14.0 npm/? node/v18.12.0 darwin x64'
       expect(pkgFromUserAgent()).toEqual({
@@ -88,14 +80,6 @@ describe('Utils', () => {
       expect(result).toBe('npm create -- my-package')
     })
 
-    it('should convert npm create to yarn create', () => {
-      const result = getFullCustomCommand('npm create -- my-package', {
-        name: 'yarn',
-        version: '3.0.0',
-      })
-      expect(result).toBe('yarn create -- my-package')
-    })
-
     it('should convert npm create to pnpm create without --', () => {
       const result = getFullCustomCommand('npm create -- my-package', {
         name: 'pnpm',
@@ -120,14 +104,6 @@ describe('Utils', () => {
       expect(result).toBe('pnpm dlx my-package')
     })
 
-    it('should handle npm exec command with yarn', () => {
-      const result = getFullCustomCommand('npm exec my-package', {
-        name: 'yarn',
-        version: '3.0.0',
-      })
-      expect(result).toBe('yarn dlx my-package')
-    })
-
     it('should handle npm exec command with bun', () => {
       const result = getFullCustomCommand('npm exec my-package', {
         name: 'bun',
@@ -136,26 +112,9 @@ describe('Utils', () => {
       expect(result).toBe('bun x my-package')
     })
 
-    it('should remove @latest for yarn 1.x', () => {
-      const result = getFullCustomCommand('npm create my-package@latest', {
-        name: 'yarn',
-        version: '1.22.19',
-      })
-      expect(result).toBe('yarn create my-package')
-    })
-
-    it('should keep @latest for yarn 2+', () => {
-      const result = getFullCustomCommand('npm create my-package@latest', {
-        name: 'yarn',
-        version: '3.0.0',
-      })
-      expect(result).toBe('yarn create my-package@latest')
-    })
-
     it('should handle command without pkgInfo', () => {
       const result = getFullCustomCommand('npm create my-package')
       expect(result).toBe('npm create my-package')
     })
   })
 })
-

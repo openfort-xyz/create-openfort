@@ -1,5 +1,5 @@
-import { describe, it, expect, afterEach } from 'vitest'
 import mri from 'mri'
+import { afterEach, describe, expect, it } from 'vitest'
 
 describe('CLI Arguments Parsing', () => {
   const originalArgv = process.argv
@@ -15,7 +15,7 @@ describe('CLI Arguments Parsing', () => {
         alias: { t: 'template' },
         string: ['template'],
       })
-      
+
       expect(argv.template).toBe('openfort-ui')
     })
 
@@ -25,7 +25,7 @@ describe('CLI Arguments Parsing', () => {
         alias: { t: 'template' },
         string: ['template'],
       })
-      
+
       expect(argv.template).toBe('headless')
     })
 
@@ -36,7 +36,7 @@ describe('CLI Arguments Parsing', () => {
         boolean: ['overwrite'],
         default: { overwrite: false },
       })
-      
+
       expect(argv.overwrite).toBe(true)
     })
 
@@ -47,7 +47,7 @@ describe('CLI Arguments Parsing', () => {
         boolean: ['help'],
         default: { help: false },
       })
-      
+
       expect(argv.help).toBe(true)
     })
 
@@ -57,7 +57,7 @@ describe('CLI Arguments Parsing', () => {
         alias: { h: 'help' },
         boolean: ['help'],
       })
-      
+
       expect(argv.h).toBe(true)
     })
 
@@ -67,7 +67,7 @@ describe('CLI Arguments Parsing', () => {
         alias: { v: 'version' },
         boolean: ['version'],
       })
-      
+
       expect(argv.version).toBe(true)
     })
 
@@ -77,7 +77,7 @@ describe('CLI Arguments Parsing', () => {
         alias: { V: 'verbose' },
         boolean: ['verbose'],
       })
-      
+
       expect(argv.verbose).toBe(true)
     })
 
@@ -87,7 +87,7 @@ describe('CLI Arguments Parsing', () => {
         boolean: ['verbose-debug'],
         default: { 'verbose-debug': false },
       })
-      
+
       expect(argv['verbose-debug']).toBe(true)
     })
 
@@ -97,7 +97,7 @@ describe('CLI Arguments Parsing', () => {
         alias: { d: 'default' },
         boolean: ['default'],
       })
-      
+
       expect(argv.default).toBe(true)
     })
 
@@ -106,7 +106,7 @@ describe('CLI Arguments Parsing', () => {
       const argv = mri(args, {
         string: ['dashboard'],
       })
-      
+
       expect(argv.dashboard).toBe('https://custom-dashboard.com')
     })
 
@@ -116,7 +116,7 @@ describe('CLI Arguments Parsing', () => {
         string: ['dashboard'],
         default: { dashboard: false },
       })
-      
+
       // When --dashboard is provided without value and marked as string, mri sets it to empty string
       expect(argv.dashboard).toBe('')
     })
@@ -127,7 +127,7 @@ describe('CLI Arguments Parsing', () => {
         boolean: ['validate'],
         default: { validate: true },
       })
-      
+
       expect(argv.validate).toBe(false)
     })
 
@@ -137,14 +137,14 @@ describe('CLI Arguments Parsing', () => {
         boolean: ['telemetry'],
         default: { telemetry: true },
       })
-      
+
       expect(argv.telemetry).toBe(false)
     })
 
     it('should parse positional argument as target directory', () => {
       const args = ['my-project']
       const argv = mri(args)
-      
+
       expect(argv._).toEqual(['my-project'])
     })
 
@@ -155,7 +155,7 @@ describe('CLI Arguments Parsing', () => {
         boolean: ['overwrite', 'verbose'],
         string: ['template'],
       })
-      
+
       expect(argv._).toEqual(['my-project'])
       expect(argv.template).toBe('openfort-ui')
       expect(argv.overwrite).toBe(true)
@@ -167,7 +167,7 @@ describe('CLI Arguments Parsing', () => {
       const argv = mri(args, {
         string: ['template', 'dashboard'],
       })
-      
+
       expect(argv.template).toBe('firebase')
       expect(argv.dashboard).toBe('https://custom.com')
     })
@@ -182,7 +182,7 @@ describe('CLI Arguments Parsing', () => {
           validate: true,
         },
       })
-      
+
       expect(argv.overwrite).toBe(false)
       expect(argv.verbose).toBe(false)
       expect(argv.validate).toBe(true)
@@ -193,7 +193,7 @@ describe('CLI Arguments Parsing', () => {
       const argv = mri(args, {
         string: ['template'],
       })
-      
+
       expect(argv._).toEqual(['my project folder'])
       expect(argv.template).toBe('openfort-ui')
     })
@@ -203,7 +203,7 @@ describe('CLI Arguments Parsing', () => {
       const argv = mri(args, {
         string: ['template'],
       })
-      
+
       expect(argv._).toEqual(['./my-project'])
       expect(argv.template).toBe('headless')
     })
@@ -213,10 +213,9 @@ describe('CLI Arguments Parsing', () => {
       const argv = mri(args, {
         string: ['template'],
       })
-      
+
       expect(argv._).toEqual(['/home/user/my-project'])
       expect(argv.template).toBe('firebase')
     })
   })
 })
-

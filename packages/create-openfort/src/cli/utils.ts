@@ -1,19 +1,14 @@
-import { prompts } from "./prompts";
+import { prompts } from './prompts'
 
-export const cancel = (text: string = "Operation cancelled") => prompts.cancel(text);
-
-export async function setup() {
-  await prompts.text({ message: 'What is your name?' });
-  console.log('Hello, world!');
-}
+export const cancel = (text: string = 'Operation cancelled') => prompts.cancel(text)
 
 export interface PkgInfo {
   name: string
   version: string
 }
 
-export const MAX_PACKAGE_NAME_LENGTH = 214;
-const PACKAGE_SEGMENT_PATTERN = /^[a-z\d~\-][a-z\d._~-]*$/;
+const MAX_PACKAGE_NAME_LENGTH = 214
+const PACKAGE_SEGMENT_PATTERN = /^[a-z\d~-][a-z\d._~-]*$/
 
 function isValidPackageSegment(segment: string) {
   return PACKAGE_SEGMENT_PATTERN.test(segment) && !segment.endsWith('.')
@@ -38,16 +33,9 @@ export function isValidPackageName(projectName: string) {
 }
 
 export function toValidPackageName(projectName: string) {
-  const sanitized = projectName
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/^[._]/, '')
-    .replace(/\.+$/g, '')
+  const sanitized = projectName.trim().toLowerCase().replace(/\s+/g, '-').replace(/^[._]/, '').replace(/\.+$/g, '')
 
-  return sanitized
-    .replace(/[^a-z\d\-~]+/g, '-')
-    .slice(0, MAX_PACKAGE_NAME_LENGTH)
+  return sanitized.replace(/[^a-z\d\-~]+/g, '-').slice(0, MAX_PACKAGE_NAME_LENGTH)
 }
 
 export function pkgFromUserAgent(): PkgInfo | undefined {
@@ -61,44 +49,32 @@ export function pkgFromUserAgent(): PkgInfo | undefined {
   }
 }
 
-
 export function getFullCustomCommand(customCommand: string, pkgInfo?: PkgInfo) {
   const pkgManager = pkgInfo ? pkgInfo.name : 'npm'
-  const isYarn1 = pkgManager === 'yarn' && pkgInfo?.version.startsWith('1.')
 
-  return (
-    customCommand
-      .replace(/^npm create (?:-- )?/, () => {
-        // `bun create` uses it's own set of templates,
-        // the closest alternative is using `bun x` directly on the package
-        if (pkgManager === 'bun') {
-          return 'bun x create-'
-        }
-        // pnpm doesn't support the -- syntax
-        if (pkgManager === 'pnpm') {
-          return 'pnpm create '
-        }
-        // For other package managers, preserve the original format
-        return customCommand.startsWith('npm create -- ')
-          ? `${pkgManager} create -- `
-          : `${pkgManager} create `
-      })
-      // Only Yarn 1.x doesn't support `@version` in the `create` command
-      .replace('@latest', () => (isYarn1 ? '' : '@latest'))
-      .replace(/^npm exec/, () => {
-        // Prefer `pnpm dlx`, `yarn dlx`, or `bun x`
-        if (pkgManager === 'pnpm') {
-          return 'pnpm dlx'
-        }
-        if (pkgManager === 'yarn' && !isYarn1) {
-          return 'yarn dlx'
-        }
-        if (pkgManager === 'bun') {
-          return 'bun x'
-        }
-        // Use `npm exec` in all other cases,
-        // including Yarn 1.x and other custom npm clients.
-        return 'npm exec'
-      })
-  )
+  return customCommand
+    .replace(/^npm create (?:-- )?/, () => {
+      // `bun create` uses it's own set of templates,
+      // the closest alternative is using `bun x` directly on the package
+      if (pkgManager === 'bun') {
+        return 'bun x create-'
+      }
+      // pnpm doesn't support the -- syntax
+      if (pkgManager === 'pnpm') {
+        return 'pnpm create '
+      }
+      // For other package managers, preserve the original format
+      return customCommand.startsWith('npm create -- ') ? `${pkgManager} create -- ` : `${pkgManager} create `
+    })
+    .replace(/^npm exec/, () => {
+      // Prefer `pnpm dlx` or `bun x`
+      if (pkgManager === 'pnpm') {
+        return 'pnpm dlx'
+      }
+      if (pkgManager === 'bun') {
+        return 'bun x'
+      }
+      // Use `npm exec` in all other cases
+      return 'npm exec'
+    })
 }

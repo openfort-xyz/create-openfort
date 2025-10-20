@@ -3,27 +3,90 @@
   "version": "0.0.0",
   "description": "A CLI tool to create a new OpenFort project",
   "private": true,
-  "workspaces": [
-    "packages/*",
-    "internal/*"
-  ],
+  "type": "module",
   "scripts": {
-    "dev": "yarn workspace create-openfort run dev",
-    "test": "yarn workspace create-openfort run test",
-    "build": "yarn workspaces foreach -A run build",
-    "lint": "yarn workspaces foreach -A run lint"
+    "preinstall": "npx only-allow pnpm",
+    "postinstall": "git config --unset core.hooksPath 2>/dev/null || true && simple-git-hooks && ./.husky/install_gitleaks.sh",
+    "dev": "pnpm --filter create-openfort dev",
+    "test": "pnpm --filter create-openfort test",
+    "test:watch": "pnpm --filter create-openfort test:watch",
+    "test:coverage": "pnpm --filter create-openfort test:coverage",
+    "build": "pnpm -r --filter create-openfort build",
+    "check": "biome check --write --unsafe",
+    "check:repo": "sherif",
+    "check:types": "tsc --noEmit",
+    "check:unused": "pnpm clean && knip",
+    "clean": "rm -rf packages/create-openfort/dist",
+    "scan:secrets": "./.husky/run_gitleaks.sh",
+    "changeset": "changeset",
+    "changeset:version": "pnpm install --lockfile-only && changeset version",
+    "changeset:publish": "pnpm build && changeset publish"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.2.4",
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
     "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-node-resolve": "^13.1.3",
+    "knip": "^5.64.0",
     "rimraf": "^6.0.1",
     "rollup": "^2.67.1",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.34.0",
     "rollup-plugin-visualizer": "^5.5.4",
+    "sherif": "^0.8.4",
+    "simple-git-hooks": "^2.13.1",
     "tslib": "^1.9.3",
     "typescript": "^5.0.4"
   },
-  "packageManager": "yarn@4.9.1"
+  "simple-git-hooks": {
+    "pre-commit": "./.husky/run_gitleaks.sh && pnpm check"
+  },
+  "packageManager": "pnpm@10.16.1",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "knip": {
+    "ignore": [
+      ".github/**",
+      ".husky/**",
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/coverage/**",
+      "test-project/**"
+    ],
+    "ignoreBinaries": [
+      "only-allow",
+      "simple-git-hooks"
+    ],
+    "ignoreDependencies": [
+      "rimraf",
+      "rollup",
+      "@rollup/plugin-commonjs",
+      "@rollup/plugin-node-resolve",
+      "rollup-plugin-peer-deps-external",
+      "rollup-plugin-terser",
+      "rollup-plugin-typescript2",
+      "rollup-plugin-visualizer",
+      "tslib"
+    ],
+    "workspaces": {
+      "packages/create-openfort": {
+        "entry": [
+          "src/index.ts!"
+        ],
+        "project": [
+          "src/**/*.ts",
+          "!src/__tests__/**"
+        ],
+        "ignore": [
+          "src/version.ts",
+          "build.js",
+          "src/__tests__/**",
+          "src/cli/args.ts"
+        ]
+      }
+    }
+  }
 }

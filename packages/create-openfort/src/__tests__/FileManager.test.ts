@@ -1,8 +1,16 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
-import { FileManager, emptyDir, isEmpty, isValidPackageName, toValidPackageName, copyDir, editFile } from '../cli/FileManager'
 import * as prompts from '@clack/prompts'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  copyDir,
+  editFile,
+  emptyDir,
+  FileManager,
+  isEmpty,
+  isValidPackageName,
+  toValidPackageName,
+} from '../cli/FileManager'
 
 // Mock modules
 vi.mock('node:fs')
@@ -111,9 +119,9 @@ describe('FileManager helpers', () => {
     it('should remove all files except .git', () => {
       vi.mocked(fs.existsSync).mockReturnValue(true)
       vi.mocked(fs.readdirSync).mockReturnValue(['file1.txt', 'file2.txt', '.git', 'folder'] as any)
-      
+
       emptyDir('/test/dir')
-      
+
       expect(fs.rmSync).toHaveBeenCalledTimes(3)
       expect(fs.rmSync).toHaveBeenCalledWith(path.resolve('/test/dir', 'file1.txt'), { recursive: true, force: true })
       expect(fs.rmSync).toHaveBeenCalledWith(path.resolve('/test/dir', 'file2.txt'), { recursive: true, force: true })
@@ -124,9 +132,9 @@ describe('FileManager helpers', () => {
     it('should preserve .git directory', () => {
       vi.mocked(fs.existsSync).mockReturnValue(true)
       vi.mocked(fs.readdirSync).mockReturnValue(['.git', 'README.md'] as any)
-      
+
       emptyDir('/test/dir')
-      
+
       expect(fs.rmSync).toHaveBeenCalledTimes(1)
       expect(fs.rmSync).toHaveBeenCalledWith(path.resolve('/test/dir', 'README.md'), { recursive: true, force: true })
     })
@@ -141,11 +149,11 @@ describe('FileManager helpers', () => {
     it('should read, transform, and write file', () => {
       const originalContent = 'Hello World'
       const transformedContent = 'HELLO WORLD'
-      
+
       vi.mocked(fs.readFileSync).mockReturnValue(originalContent)
-      
+
       editFile('/test/file.txt', (content) => content.toUpperCase())
-      
+
       expect(fs.readFileSync).toHaveBeenCalledWith('/test/file.txt', 'utf-8')
       expect(fs.writeFileSync).toHaveBeenCalledWith('/test/file.txt', transformedContent, 'utf-8')
     })
@@ -153,11 +161,11 @@ describe('FileManager helpers', () => {
     it('should handle multi-line content', () => {
       const originalContent = 'line1\nline2\nline3'
       const transformedContent = 'line1\nmodified line2\nline3'
-      
+
       vi.mocked(fs.readFileSync).mockReturnValue(originalContent)
-      
+
       editFile('/test/file.txt', (content) => content.replace('line2', 'modified line2'))
-      
+
       expect(fs.writeFileSync).toHaveBeenCalledWith('/test/file.txt', transformedContent, 'utf-8')
     })
   })
@@ -172,18 +180,18 @@ describe('FileManager helpers', () => {
 
     it('should create destination directory', () => {
       vi.mocked(fs.readdirSync).mockReturnValue([])
-      
+
       copyDir('/src', '/dest')
-      
+
       expect(fs.mkdirSync).toHaveBeenCalledWith('/dest', { recursive: true })
     })
 
     it('should copy files from source to destination', () => {
       vi.mocked(fs.readdirSync).mockReturnValue(['file1.txt', 'file2.txt'] as any)
       vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => false } as any)
-      
+
       copyDir('/src', '/dest')
-      
+
       expect(fs.copyFileSync).toHaveBeenCalledWith(
         path.resolve('/src', 'file1.txt'),
         path.resolve('/dest', 'file1.txt')
@@ -198,13 +206,13 @@ describe('FileManager helpers', () => {
       vi.mocked(fs.readdirSync)
         .mockReturnValueOnce(['folder'] as any)
         .mockReturnValueOnce(['nested-file.txt'] as any)
-      
+
       vi.mocked(fs.statSync)
         .mockReturnValueOnce({ isDirectory: () => true } as any)
         .mockReturnValueOnce({ isDirectory: () => false } as any)
-      
+
       copyDir('/src', '/dest')
-      
+
       expect(fs.mkdirSync).toHaveBeenCalledWith('/dest', { recursive: true })
       expect(fs.mkdirSync).toHaveBeenCalledWith(path.resolve('/dest', 'folder'), { recursive: true })
     })
@@ -212,21 +220,18 @@ describe('FileManager helpers', () => {
     it('should respect ignore list', () => {
       vi.mocked(fs.readdirSync).mockReturnValue(['file1.txt', 'file2.txt', 'ignored.txt'] as any)
       vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => false } as any)
-      
+
       copyDir('/src', '/dest', [path.resolve('/src', 'ignored.txt')])
-      
+
       expect(fs.copyFileSync).toHaveBeenCalledTimes(2)
-      expect(fs.copyFileSync).not.toHaveBeenCalledWith(
-        path.resolve('/src', 'ignored.txt'),
-        expect.any(String)
-      )
+      expect(fs.copyFileSync).not.toHaveBeenCalledWith(path.resolve('/src', 'ignored.txt'), expect.any(String))
     })
   })
 })
 
 describe('FileManager class', () => {
   let fileManager: FileManager
-  
+
   beforeEach(() => {
     vi.clearAllMocks()
     fileManager = new FileManager()
@@ -242,10 +247,10 @@ describe('FileManager class', () => {
     it('should detect package manager from user agent', () => {
       const originalUserAgent = process.env.npm_config_user_agent
       process.env.npm_config_user_agent = 'pnpm/7.14.0 npm/? node/v18.12.0'
-      
+
       const fm = new FileManager()
       expect(fm.pkgManager).toBe('pnpm')
-      
+
       if (originalUserAgent !== undefined) {
         process.env.npm_config_user_agent = originalUserAgent
       } else {
@@ -262,7 +267,7 @@ describe('FileManager class', () => {
     it('should return correct path when initialized without subfolders', () => {
       fileManager.root = '/test/project'
       fileManager.addSubfolders = false
-      
+
       const result = fileManager.getFilePath('file.txt')
       expect(result).toBe(path.join('/test/project', 'file.txt'))
     })
@@ -270,7 +275,7 @@ describe('FileManager class', () => {
     it('should return correct path when initialized with subfolders', () => {
       fileManager.root = '/test/project'
       fileManager.addSubfolders = true
-      
+
       const result = fileManager.getFilePath('file.txt')
       expect(result).toBe(path.join('/test/project', 'frontend', 'file.txt'))
     })
@@ -287,13 +292,10 @@ describe('FileManager class', () => {
 
     it('should write file with content', () => {
       fileManager.root = '/test/project'
-      
+
       fileManager.write('test.txt', 'Hello World')
-      
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        path.join('/test/project', 'test.txt'),
-        'Hello World'
-      )
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(path.join('/test/project', 'test.txt'), 'Hello World')
     })
   })
 
@@ -309,13 +311,10 @@ describe('FileManager class', () => {
     it('should read file content', () => {
       fileManager.root = '/test/project'
       vi.mocked(fs.readFileSync).mockReturnValue('File content')
-      
+
       const result = fileManager.read('test.txt')
-      
-      expect(fs.readFileSync).toHaveBeenCalledWith(
-        path.join('/test/project', 'test.txt'),
-        'utf-8'
-      )
+
+      expect(fs.readFileSync).toHaveBeenCalledWith(path.join('/test/project', 'test.txt'), 'utf-8')
       expect(result).toBe('File content')
     })
   })
@@ -332,16 +331,16 @@ describe('FileManager class', () => {
 
     it('should create .env from .env.example with provided values', () => {
       fileManager.root = '/test/project'
-      
+
       // The .env.example has prefixed keys (e.g., NEXT_PUBLIC_)
       const envExample = `# Comment
 NEXT_PUBLIC_OPENFORT_PUBLISHABLE_KEY=
 VITE_SHIELD_PUBLISHABLE_KEY=
 NEXT_PUBLIC_CREATE_ENCRYPTED_SESSION_ENDPOINT=
 NEXT_PUBLIC_OPENFORT_THEME=`
-      
+
       vi.mocked(fs.readFileSync).mockReturnValue(envExample)
-      
+
       // The env object has the suffix part (after first underscore)
       fileManager.addEnv({
         PUBLIC_OPENFORT_PUBLISHABLE_KEY: 'pk_test_123',
@@ -349,36 +348,32 @@ NEXT_PUBLIC_OPENFORT_THEME=`
         PUBLIC_CREATE_ENCRYPTED_SESSION_ENDPOINT: 'http://localhost:3110/api',
         PUBLIC_OPENFORT_THEME: 'midnight',
       })
-      
+
       const expectedContent = `# Comment
 NEXT_PUBLIC_OPENFORT_PUBLISHABLE_KEY=pk_test_123
 VITE_SHIELD_PUBLISHABLE_KEY=shield_123
 NEXT_PUBLIC_CREATE_ENCRYPTED_SESSION_ENDPOINT=http://localhost:3110/api
 NEXT_PUBLIC_OPENFORT_THEME=midnight`
-      
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        path.join('/test/project', '.env'),
-        expectedContent,
-        'utf-8'
-      )
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(path.join('/test/project', '.env'), expectedContent, 'utf-8')
     })
 
     it('should preserve comments and empty lines', () => {
       fileManager.root = '/test/project'
-      
+
       const envExample = `# This is a comment
 # Another comment
 
 OPENFORT_PUBLISHABLE_KEY=
 # Inline comment
 SHIELD_PUBLISHABLE_KEY=`
-      
+
       vi.mocked(fs.readFileSync).mockReturnValue(envExample)
-      
+
       fileManager.addEnv({
         OPENFORT_PUBLISHABLE_KEY: 'pk_test_123',
       })
-      
+
       expect(fs.writeFileSync).toHaveBeenCalled()
       const writtenContent = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string
       expect(writtenContent).toContain('# This is a comment')
@@ -387,17 +382,17 @@ SHIELD_PUBLISHABLE_KEY=`
 
     it('should leave unmatched keys unchanged', () => {
       fileManager.root = '/test/project'
-      
+
       const envExample = `NEXT_PUBLIC_OPENFORT_PUBLISHABLE_KEY=
 OTHER_KEY=default_value`
-      
+
       vi.mocked(fs.readFileSync).mockReturnValue(envExample)
-      
+
       // Only provide value for one key
       fileManager.addEnv({
         PUBLIC_OPENFORT_PUBLISHABLE_KEY: 'pk_test_123',
       })
-      
+
       const writtenContent = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string
       expect(writtenContent).toContain('NEXT_PUBLIC_OPENFORT_PUBLISHABLE_KEY=pk_test_123')
       expect(writtenContent).toContain('OTHER_KEY=default_value')
@@ -405,17 +400,17 @@ OTHER_KEY=default_value`
 
     it('should handle undefined values', () => {
       fileManager.root = '/test/project'
-      
+
       const envExample = `NEXT_PUBLIC_OPENFORT_PUBLISHABLE_KEY=
 VITE_SHIELD_PUBLISHABLE_KEY=`
-      
+
       vi.mocked(fs.readFileSync).mockReturnValue(envExample)
-      
+
       fileManager.addEnv({
         PUBLIC_OPENFORT_PUBLISHABLE_KEY: 'pk_test_123',
         SHIELD_PUBLISHABLE_KEY: undefined,
       })
-      
+
       const writtenContent = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string
       expect(writtenContent).toContain('NEXT_PUBLIC_OPENFORT_PUBLISHABLE_KEY=pk_test_123')
       expect(writtenContent).toContain('VITE_SHIELD_PUBLISHABLE_KEY=')
@@ -443,43 +438,21 @@ VITE_SHIELD_PUBLISHABLE_KEY=`
       fileManager.cwd = '/test'
       fileManager.pkgManager = 'npm'
       fileManager.addSubfolders = false
-      
-      fileManager.outro()
-      
-      expect(prompts.outro).toHaveBeenCalledWith(
-        expect.stringContaining('npm install')
-      )
-      expect(prompts.outro).toHaveBeenCalledWith(
-        expect.stringContaining('npm run dev')
-      )
-    })
 
-    it('should generate correct outro message for yarn', () => {
-      fileManager.root = '/test/my-project'
-      fileManager.cwd = '/test'
-      fileManager.pkgManager = 'yarn'
-      fileManager.addSubfolders = false
-      
       fileManager.outro()
-      
-      expect(prompts.outro).toHaveBeenCalledWith(
-        expect.stringContaining('yarn')
-      )
-      expect(prompts.outro).toHaveBeenCalledWith(
-        expect.stringContaining('yarn dev')
-      )
+
+      expect(prompts.outro).toHaveBeenCalledWith(expect.stringContaining('npm install'))
+      expect(prompts.outro).toHaveBeenCalledWith(expect.stringContaining('npm run dev'))
     })
 
     it('should include cd command when root !== cwd', () => {
       fileManager.root = '/test/my-project'
       fileManager.cwd = '/test'
       fileManager.pkgManager = 'npm'
-      
+
       fileManager.outro()
-      
-      expect(prompts.outro).toHaveBeenCalledWith(
-        expect.stringContaining('cd my-project')
-      )
+
+      expect(prompts.outro).toHaveBeenCalledWith(expect.stringContaining('cd my-project'))
     })
 
     it('should include subfolder instructions when addSubfolders is true', () => {
@@ -487,15 +460,11 @@ VITE_SHIELD_PUBLISHABLE_KEY=`
       fileManager.cwd = '/test'
       fileManager.pkgManager = 'npm'
       fileManager.addSubfolders = true
-      
+
       fileManager.outro()
-      
-      expect(prompts.outro).toHaveBeenCalledWith(
-        expect.stringContaining('cd backend')
-      )
-      expect(prompts.outro).toHaveBeenCalledWith(
-        expect.stringContaining('cd frontend')
-      )
+
+      expect(prompts.outro).toHaveBeenCalledWith(expect.stringContaining('cd backend'))
+      expect(prompts.outro).toHaveBeenCalledWith(expect.stringContaining('cd frontend'))
     })
   })
 })

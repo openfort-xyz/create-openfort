@@ -1,20 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { promptTemplate, TEMPLATES, DEFAULT_AVAILABLE_TEMPLATES } from '../cli/template'
 import * as prompts from '@clack/prompts'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { DEFAULT_AVAILABLE_TEMPLATES, promptTemplate, TEMPLATES } from '../cli/template'
 
 vi.mock('@clack/prompts')
 
 describe('Template', () => {
   describe('TEMPLATES constant', () => {
     it('should have all required templates', () => {
-      const templateNames = TEMPLATES.map(t => t.name)
+      const templateNames = TEMPLATES.map((t) => t.name)
       expect(templateNames).toContain('openfort-ui')
       expect(templateNames).toContain('headless')
       expect(templateNames).toContain('firebase')
     })
 
     it('should have display names and colors', () => {
-      TEMPLATES.forEach(template => {
+      TEMPLATES.forEach((template) => {
         expect(template.display).toBeTruthy()
         expect(template.color).toBeTypeOf('function')
       })
@@ -37,7 +37,7 @@ describe('Template', () => {
       const result = await promptTemplate({
         argTemplate: 'openfort-ui',
       })
-      
+
       expect(result).toBe('openfort-ui')
       expect(prompts.select).not.toHaveBeenCalled()
     })
@@ -45,9 +45,9 @@ describe('Template', () => {
     it('should prompt when no argTemplate is provided', async () => {
       vi.mocked(prompts.select).mockResolvedValue({ name: 'headless' })
       vi.mocked(prompts.isCancel).mockReturnValue(false)
-      
+
       const result = await promptTemplate({})
-      
+
       expect(prompts.select).toHaveBeenCalled()
       expect(result).toBe('headless')
     })
@@ -55,11 +55,11 @@ describe('Template', () => {
     it('should prompt when argTemplate is invalid', async () => {
       vi.mocked(prompts.select).mockResolvedValue({ name: 'openfort-ui' })
       vi.mocked(prompts.isCancel).mockReturnValue(false)
-      
+
       const result = await promptTemplate({
         argTemplate: 'invalid-template',
       })
-      
+
       expect(prompts.select).toHaveBeenCalledWith(
         expect.objectContaining({
           message: expect.stringContaining('invalid-template'),
@@ -71,22 +71,22 @@ describe('Template', () => {
     it('should handle user cancellation', async () => {
       vi.mocked(prompts.select).mockResolvedValue(Symbol('cancel'))
       vi.mocked(prompts.isCancel).mockReturnValue(true)
-      
+
       const result = await promptTemplate({})
-      
+
       expect(result).toBeUndefined()
     })
 
     it('should respect availableTemplates filter', async () => {
       vi.mocked(prompts.select).mockResolvedValue({ name: 'openfort-ui' })
       vi.mocked(prompts.isCancel).mockReturnValue(false)
-      
+
       // Even though argTemplate is valid, it's not in availableTemplates
       const result = await promptTemplate({
         argTemplate: 'firebase',
         availableTemplates: ['openfort-ui', 'headless'],
       })
-      
+
       // Should prompt because firebase is not available
       expect(prompts.select).toHaveBeenCalled()
       expect(result).toBe('openfort-ui')
@@ -97,7 +97,7 @@ describe('Template', () => {
         argTemplate: 'openfort-ui',
         availableTemplates: ['openfort-ui', 'headless'],
       })
-      
+
       expect(prompts.select).not.toHaveBeenCalled()
       expect(result).toBe('openfort-ui')
     })
@@ -105,12 +105,11 @@ describe('Template', () => {
     it('should include all templates in select options', async () => {
       vi.mocked(prompts.select).mockResolvedValue({ name: 'headless' })
       vi.mocked(prompts.isCancel).mockReturnValue(false)
-      
+
       await promptTemplate({})
-      
+
       const selectCall = vi.mocked(prompts.select).mock.calls[0][0]
       expect(selectCall.options).toHaveLength(TEMPLATES.length)
     })
   })
 })
-

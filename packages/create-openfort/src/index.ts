@@ -1,7 +1,10 @@
 import type { Theme } from '@openfort/react'
 import mri from 'mri'
-import { cancel, fileManager, formatTargetDir, prompts, promptTemplate } from './cli'
+import { fileManager, formatTargetDir } from './cli/FileManager'
+import { prompts } from './cli/prompts'
 import { telemetry } from './cli/telemetry'
+import { promptTemplate } from './cli/template'
+import { cancel } from './cli/utils'
 import { isVerbose, setVerboseLevel } from './cli/verboseLevel'
 import { CLI_VERSION } from './version'
 
@@ -18,7 +21,7 @@ const argv = mri<{
   theme?: Theme
   version?: boolean
   dashboard?: string | boolean
-  "verbose-debug"?: boolean
+  'verbose-debug'?: boolean
   telemetry?: boolean
 }>(process.argv.slice(2), {
   alias: {
@@ -29,18 +32,8 @@ const argv = mri<{
     V: 'verbose',
     v: 'version',
   },
-  boolean: [
-    'help',
-    'overwrite',
-    'verbose',
-    'validate',
-    'version',
-    'verbose-debug',
-  ],
-  string: [
-    'dashboard',
-    'template',
-  ],
+  boolean: ['help', 'overwrite', 'verbose', 'validate', 'version', 'verbose-debug'],
+  string: ['dashboard', 'template'],
   default: {
     template: undefined,
     overwrite: false,
@@ -50,7 +43,7 @@ const argv = mri<{
     dashboard: false,
     version: false,
     telemetry: true,
-    "verbose-debug": false,
+    'verbose-debug': false,
   },
 })
 
@@ -76,21 +69,19 @@ Options:
 const defaultTargetDir = 'openfort-project'
 const defaultApiEndpoint = 'http://localhost:3110/api/protected-create-encryption-session'
 
-const defaultDashboardUrl = "https://dashboard.openfort.io";
+const defaultDashboardUrl = 'https://dashboard.openfort.io'
 
 async function init() {
-  const argTargetDir = argv._[0]
-    ? formatTargetDir(String(argv._[0]))
-    : undefined
+  const argTargetDir = argv._[0] ? formatTargetDir(String(argv._[0])) : undefined
   const argTemplate = argv.template
   const argOverwrite = argv.overwrite
   const validate = !!argv.validate
   const defaultValues = argv.default
-  const dashboard = !!argv.dashboard ? argv.dashboard !== true ? String(argv.dashboard) : defaultDashboardUrl : false
+  const dashboard = argv.dashboard ? (argv.dashboard !== true ? String(argv.dashboard) : defaultDashboardUrl) : false
 
-  setVerboseLevel(!!argv.verbose, !!argv["verbose-debug"]);
+  setVerboseLevel(!!argv.verbose, !!argv['verbose-debug'])
 
-  telemetry.enabled = argv.telemetry !== false;
+  telemetry.enabled = argv.telemetry !== false
 
   // read version from package.json
 
@@ -102,7 +93,7 @@ async function init() {
 
   telemetry.send({
     status: 'started',
-  });
+  })
 
   console.log(`\n`)
 
@@ -115,7 +106,7 @@ async function init() {
   prompts.intro("Let's create a new Openfort project!")
 
   if (isVerbose) {
-    prompts.log.success("Verbose mode enabled")
+    prompts.log.success('Verbose mode enabled')
     prompts.log.info(`create-openfort version: ${CLI_VERSION}`)
     // prompts.log.info("Arguments:")
     // Object.entries(argv).forEach(([key, value]) => {
@@ -129,7 +120,7 @@ async function init() {
   }
 
   if (!validate)
-    prompts.log.warn("No validation will be performed on the input values.\nPlease make sure to provide valid values.")
+    prompts.log.warn('No validation will be performed on the input values.\nPlease make sure to provide valid values.')
 
   await fileManager.init({
     argTargetDir,
@@ -137,7 +128,7 @@ async function init() {
     defaultTargetDir,
   })
 
-  if (!fileManager || !fileManager.root) return;
+  if (!fileManager || !fileManager.root) return
 
   if (argTemplate && isVerbose) {
     prompts.log.info(`Using template from argument: ${argTemplate}`)
@@ -146,32 +137,32 @@ async function init() {
   const template = await promptTemplate({
     argTemplate: argTemplate,
   })
-  if (!template) return; // When cancelled
+  if (!template) return // When cancelled
 
   let createBackend: boolean | undefined = false
   let apiEndpoint: string = defaultApiEndpoint
 
-  const createEmbeddedSigner = true;
+  const createEmbeddedSigner = true
 
   if (createEmbeddedSigner) {
     // Choose recovery method
     const withAutomaticRecovery = defaultValues
       ? true
       : await prompts.select({
-        message: 'Do you want to create a backend for automatic account recovery?',
-        options: [
-          {
-            value: true,
-            label: 'Yes',
-            hint: 'Better user experience',
-          },
-          {
-            value: false,
-            label: 'No',
-            hint: 'Users will recover their account with a password or passkey',
-          },
-        ],
-      })
+          message: 'Do you want to create a backend for automatic account recovery?',
+          options: [
+            {
+              value: true,
+              label: 'Yes',
+              hint: 'Better user experience',
+            },
+            {
+              value: false,
+              label: 'No',
+              hint: 'Users will recover their account with a password or passkey',
+            },
+          ],
+        })
     if (prompts.isCancel(withAutomaticRecovery)) throw cancel()
 
     if (withAutomaticRecovery) {
@@ -193,20 +184,21 @@ async function init() {
       if (prompts.isCancel(result)) throw cancel()
       createBackend = result
 
-      let valid = createBackend;
+      let valid = createBackend
       let attempts = 0
       while (!valid) {
         const apiEndpointResult = await prompts.text({
-          message: attempts === 0 ?
-            'Please provide your API endpoint to create an encryption session:'
-            : 'Please provide a valid API endpoint to create an encryption session:',
+          message:
+            attempts === 0
+              ? 'Please provide your API endpoint to create an encryption session:'
+              : 'Please provide a valid API endpoint to create an encryption session:',
           placeholder: 'http://localhost:3110/api/protected-create-encryption-session',
           validate: (value) => {
-            if (!validate) return;
+            if (!validate) return
             if (!value) {
               return 'API endpoint is required'
             }
-          }
+          },
         })
         if (prompts.isCancel(apiEndpointResult)) throw cancel()
         apiEndpoint = apiEndpointResult
@@ -233,7 +225,8 @@ But got:
 ${JSON.stringify(body, null, 2)}
 `)
             }
-          }).catch((error) => {
+          })
+          .catch((_error) => {
             prompts.log.error('Invalid API endpoint. Ensure you have a backend running and the endpoint is correct.')
           })
 
@@ -241,22 +234,22 @@ ${JSON.stringify(body, null, 2)}
           valid = true
         }
 
-        attempts++;
+        attempts++
       }
     }
   }
 
   // Select theme
-  let theme: Theme | undefined;
+  let theme: Theme | undefined
 
-  if (template === "openfort-ui") {
+  if (template === 'openfort-ui') {
     const themeResult = await prompts.select<Theme | symbol>({
       message: 'Select a theme:',
       options: [
         {
           value: 'auto',
           label: 'Default',
-          hint: 'Auto'
+          hint: 'Auto',
         },
         {
           value: 'midnight',
@@ -287,27 +280,27 @@ ${JSON.stringify(body, null, 2)}
           label: 'Nouns',
         },
       ],
-    });
-    if (prompts.isCancel(themeResult)) throw cancel();
-    theme = themeResult as Theme;
+    })
+    if (prompts.isCancel(themeResult)) throw cancel()
+    theme = themeResult as Theme
   }
 
-
-  prompts.log.success(`Good! You are all set.\nPlease provide the following keys to continue.\nGet your keys from ${dashboard || defaultDashboardUrl}/developers/api-keys`)
+  prompts.log.success(
+    `Good! You are all set.\nPlease provide the following keys to continue.\nGet your keys from ${dashboard || defaultDashboardUrl}/developers/api-keys`
+  )
 
   // const templateTransformer = TemplateTransformer.getTransformer(template, fileManager, verbose)
 
-
-  const uuidV4Pattern = "[\\da-f]{8}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{12}";
-  const keyPattern = `(test|live)_${uuidV4Pattern}`;
-  const skRegex = new RegExp(`^sk_${keyPattern}$`);
-  const pkRegex = new RegExp(`^pk_${keyPattern}$`);
-  const uuidV4Regex = new RegExp(`^${uuidV4Pattern}$`);
-  const length44Regex = new RegExp(`^.{44}$`);
+  const uuidV4Pattern = '[\\da-f]{8}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{12}'
+  const keyPattern = `(test|live)_${uuidV4Pattern}`
+  const skRegex = new RegExp(`^sk_${keyPattern}$`)
+  const pkRegex = new RegExp(`^pk_${keyPattern}$`)
+  const uuidV4Regex = new RegExp(`^${uuidV4Pattern}$`)
+  const length44Regex = /^.{44}$/
 
   const validateInput = (value: string, pattern: RegExp, name: string) => {
-    if (!validate) return;
-    if (value === '-') return;
+    if (!validate) return
+    if (value === '-') return
     if (!value) {
       return `${name} is required`
     } else if (!pattern.test(value)) {
@@ -320,7 +313,7 @@ ${JSON.stringify(body, null, 2)}
     const publishableKey = await prompts.text({
       message: 'Openfort Publishable Key:',
       placeholder: 'pk...',
-      validate: (value) => validateInput(value, pkRegex, 'Openfort Publishable Key')
+      validate: (value) => validateInput(value, pkRegex, 'Openfort Publishable Key'),
     })
     if (prompts.isCancel(publishableKey)) throw cancel()
     return publishableKey
@@ -330,7 +323,7 @@ ${JSON.stringify(body, null, 2)}
     const openfortSecretResult = await prompts.text({
       message: 'Openfort Secret:',
       placeholder: 'sk_...',
-      validate: (value) => validateInput(value, skRegex, 'Openfort Secret Key')
+      validate: (value) => validateInput(value, skRegex, 'Openfort Secret Key'),
     })
     if (prompts.isCancel(openfortSecretResult)) throw cancel()
     return openfortSecretResult
@@ -340,7 +333,7 @@ ${JSON.stringify(body, null, 2)}
     const result = await prompts.text({
       message: 'Shield Publishable Key:',
       placeholder: 'Your Shield Publishable Key',
-      validate: (value) => validateInput(value, uuidV4Regex, 'Shield Publishable Key')
+      validate: (value) => validateInput(value, uuidV4Regex, 'Shield Publishable Key'),
     })
     if (prompts.isCancel(result)) throw cancel()
     return result
@@ -350,7 +343,7 @@ ${JSON.stringify(body, null, 2)}
     const shieldSecretResult = await prompts.text({
       message: 'Shield Secret:',
       placeholder: 'Your Shield Secret',
-      validate: (value) => validateInput(value, uuidV4Regex, 'Shield Secret Key')
+      validate: (value) => validateInput(value, uuidV4Regex, 'Shield Secret Key'),
     })
     if (prompts.isCancel(shieldSecretResult)) throw cancel()
     return shieldSecretResult
@@ -360,7 +353,7 @@ ${JSON.stringify(body, null, 2)}
     const shieldEncryptionShareResult = await prompts.text({
       message: 'Shield Encryption Share:',
       placeholder: 'Your Shield Encryption Share',
-      validate: (value) => validateInput(value, length44Regex, 'Shield Encryption Share')
+      validate: (value) => validateInput(value, length44Regex, 'Shield Encryption Share'),
     })
     if (prompts.isCancel(shieldEncryptionShareResult)) throw cancel()
     return shieldEncryptionShareResult
@@ -369,10 +362,10 @@ ${JSON.stringify(body, null, 2)}
   const openfortPublic = await requestOpenfortPublic()
   telemetry.projectId = openfortPublic
 
-  let shieldPublishableKey = undefined
-  let openfortSecret = undefined
-  let shieldSecret = undefined
-  let shieldEncryptionShare = undefined
+  let shieldPublishableKey: string | undefined
+  let openfortSecret: string | undefined
+  let shieldSecret: string | undefined
+  let shieldEncryptionShare: string | undefined
 
   if (createBackend) {
     openfortSecret = await requestOpenfortSecret()
@@ -385,14 +378,13 @@ ${JSON.stringify(body, null, 2)}
     shieldPublishableKey = await requestShieldPublishable()
   }
 
-  if (isVerbose)
-    prompts.log.info(`Using template: ${template}`)
+  if (isVerbose) prompts.log.info(`Using template: ${template}`)
 
   prompts.log.step(`Scaffolding project in ${fileManager.root}...`)
 
   if (createBackend) {
     if (!openfortSecret || !shieldSecret || !shieldPublishableKey || !shieldEncryptionShare) {
-      throw cancel("Missing Openfort Secret, Shield Secret, Shield Publishable Key or Shield Encryption Share")
+      throw cancel('Missing Openfort Secret, Shield Secret, Shield Publishable Key or Shield Encryption Share')
     }
 
     await fileManager.createBackend({
@@ -404,7 +396,7 @@ ${JSON.stringify(body, null, 2)}
     })
   }
 
-  await fileManager.gitPick("openfort-xyz/openfort-react", `examples/quickstarts/${template}`)
+  await fileManager.gitPick('openfort-xyz/openfort-react', `examples/quickstarts/${template}`)
 
   const env: Record<string, string | undefined> = {
     SHIELD_PUBLISHABLE_KEY: shieldPublishableKey,
@@ -418,14 +410,14 @@ ${JSON.stringify(body, null, 2)}
 
   telemetry.send({
     status: 'completed',
-  });
+  })
 
   // TODO: Git init and commit first commit
 
   fileManager.addEnv(env)
   // templateTransformer.addEnv(env)
 
-  fileManager.outro();
+  fileManager.outro()
 }
 
-init().catch(() => { })
+init().catch(() => {})

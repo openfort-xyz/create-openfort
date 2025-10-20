@@ -60,4 +60,3 @@ export const COMMENTS_ONLY_ENV = `# This is a comment
 export const ENV_WITH_SPECIAL_CHARS = `API_URL=https://api.example.com/v1?key=value&other=123
 SECRET_KEY=abc123!@#$%^&*()
 BASE64_VALUE=SGVsbG8gV29ybGQhCg==`
-

@@ -1,47 +1,47 @@
-import fetch from 'node-fetch';
-import { CLI_VERSION } from '../version';
-import { prompts } from './prompts';
-import { hostname, userInfo } from 'os';
-import { createHash } from 'crypto';
-import { isVerboseDebug } from './verboseLevel';
-import { fileManager } from './FileManager';
+import { createHash, randomBytes } from 'node:crypto'
+import { hostname, userInfo } from 'node:os'
+import fetch from 'node-fetch'
+import { CLI_VERSION } from '../version'
+import { fileManager } from './FileManager'
+import { prompts } from './prompts'
+import { isVerboseDebug } from './verboseLevel'
 
-const posthogKey = "phc_HosujvcO5QzmU2MVvZo8AxWV0pplTZJLr3jEd8dRVPE"
-const posthogHost = "https://analytics.openfort.xyz"
+const posthogKey = 'phc_HosujvcO5QzmU2MVvZo8AxWV0pplTZJLr3jEd8dRVPE'
+const posthogHost = 'https://analytics.openfort.xyz'
 
 const getAnonymousId = () => {
   // Combines hostname + username, hashed = anonymous but consistent
-  const identifier = `${hostname()}-${userInfo().username}`;
-  return createHash('sha256').update(identifier).digest('hex').slice(0, 16);
-};
+  const identifier = `${hostname()}-${userInfo().username}`
+  return createHash('sha256').update(identifier).digest('hex').slice(0, 16)
+}
 
 class Telemetry {
-  anonymousId: string;
-  enabled: boolean = true;
-  sessionId: string;
+  anonymousId: string
+  enabled: boolean = true
+  sessionId: string
 
-  projectId?: string;
-  template?: string;
+  projectId?: string
+  template?: string
 
   constructor() {
-    this.anonymousId = getAnonymousId();
-    this.sessionId = Math.random().toString(36).substring(2, 15);
+    this.anonymousId = getAnonymousId()
+    this.sessionId = randomBytes(8).toString('hex')
   }
 
   send = async ({
     properties = {},
     status,
   }: {
-    properties?: Record<string, any>,
+    properties?: Record<string, any>
     status: 'started' | 'completed' | 'error'
   }) => {
-    if (!this.enabled) return;
+    if (!this.enabled) return
 
     if (isVerboseDebug) {
-      console.log(`Sending telemetry to ${posthogHost}`);
+      console.log(`Sending telemetry to ${posthogHost}`)
     }
 
-    if (!posthogKey || !posthogHost) return;
+    if (!posthogKey || !posthogHost) return
 
     const fullProperties = {
       session_id: this.sessionId,
@@ -55,7 +55,7 @@ class Telemetry {
       template: this.template,
 
       ...properties,
-    };
+    }
     const response = await fetch(`${posthogHost}/capture/`, {
       method: 'POST',
       headers: {
@@ -69,19 +69,18 @@ class Telemetry {
       }),
     }).catch((e) => {
       if (isVerboseDebug) {
-        prompts.log.error('Failed to send telemetry' + JSON.stringify(e, null, 2));
+        prompts.log.error(`Failed to send telemetry${JSON.stringify(e, null, 2)}`)
       }
-    });
+    })
 
     if (isVerboseDebug) {
       if (response?.ok) {
-        console.log(`Telemetry sent: ${JSON.stringify(fullProperties, null, 2)}`);
+        console.log(`Telemetry sent: ${JSON.stringify(fullProperties, null, 2)}`)
       } else {
-        console.error(`Failed to send telemetry: ${JSON.stringify(response, null, 2)}`);
+        console.error(`Failed to send telemetry: ${JSON.stringify(response, null, 2)}`)
       }
     }
   }
 }
 
-
-export const telemetry = new Telemetry();
+export const telemetry = new Telemetry()

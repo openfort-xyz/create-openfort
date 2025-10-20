@@ -1,0 +1,9 @@
+title = "Create Openfort CLI gitleaks config"
+
+# Allowlist for known public keys that are safe to commit
+[allowlist]
+description = "PostHog public analytics key"
+regexes = [
+  '''phc_HosujvcO5QzmU2MVvZo8AxWV0pplTZJLr3jEd8dRVPE'''
+]
+
