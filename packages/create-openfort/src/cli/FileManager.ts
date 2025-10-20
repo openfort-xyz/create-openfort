@@ -99,7 +99,7 @@ export function copyDir(srcDir: string, destDir: string, ignoreFiles: string[] =
   }
 }
 
-export function copy(src: string, dest: string, ignoreFiles: string[] = []) {
+function copy(src: string, dest: string, ignoreFiles: string[] = []) {
   if (ignoreFiles.some((ignore) => ignore === src)) {
     return
   }

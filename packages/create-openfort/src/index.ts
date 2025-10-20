@@ -1,7 +1,10 @@
 import type { Theme } from '@openfort/react'
 import mri from 'mri'
-import { cancel, fileManager, formatTargetDir, prompts, promptTemplate } from './cli'
+import { fileManager, formatTargetDir } from './cli/FileManager'
+import { prompts } from './cli/prompts'
 import { telemetry } from './cli/telemetry'
+import { promptTemplate } from './cli/template'
+import { cancel } from './cli/utils'
 import { isVerbose, setVerboseLevel } from './cli/verboseLevel'
 import { CLI_VERSION } from './version'
 

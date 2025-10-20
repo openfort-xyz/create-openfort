@@ -2,17 +2,12 @@ import { prompts } from './prompts'
 
 export const cancel = (text: string = 'Operation cancelled') => prompts.cancel(text)
 
-export async function setup() {
-  await prompts.text({ message: 'What is your name?' })
-  console.log('Hello, world!')
-}
-
 export interface PkgInfo {
   name: string
   version: string
 }
 
-export const MAX_PACKAGE_NAME_LENGTH = 214
+const MAX_PACKAGE_NAME_LENGTH = 214
 const PACKAGE_SEGMENT_PATTERN = /^[a-z\d~-][a-z\d._~-]*$/
 
 function isValidPackageSegment(segment: string) {

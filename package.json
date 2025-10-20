@@ -57,17 +57,9 @@
       "test-project/**"
     ],
     "ignoreBinaries": [
-      "dev",
-      "only-allow",
-      "simple-git-hooks"
+      "only-allow"
     ],
     "ignoreDependencies": [
-      "@biomejs/biome",
-      "@changesets/changelog-github",
-      "@changesets/cli",
-      "simple-git-hooks",
-      "sherif",
-      "knip",
       "rimraf",
       "rollup",
       "@rollup/plugin-commonjs",
@@ -81,12 +73,13 @@
     "workspaces": {
       "packages/create-openfort": {
         "entry": [
-          "src/index.ts!",
-          "index.js!"
+          "src/index.ts!"
         ],
         "ignore": [
           "src/version.ts",
-          "build.js"
+          "build.js",
+          "src/__tests__/**",
+          "src/cli/args.ts"
         ]
       }
     }
