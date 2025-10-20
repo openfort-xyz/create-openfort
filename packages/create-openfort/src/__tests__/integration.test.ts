@@ -140,12 +140,6 @@ describe('Integration Tests', () => {
       expect(fm.pkgManager).toBe('npm')
     })
 
-    it('should detect yarn', () => {
-      process.env.npm_config_user_agent = 'yarn/3.0.0 node/v18.12.0'
-      const fm = new FileManager()
-      expect(fm.pkgManager).toBe('yarn')
-    })
-
     it('should detect pnpm', () => {
       process.env.npm_config_user_agent = 'pnpm/7.14.0 node/v18.12.0'
       const fm = new FileManager()

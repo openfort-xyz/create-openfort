@@ -450,16 +450,8 @@ export class FileManager {
     }
 
     const addRunToMessage = () => {
-      switch (this.pkgManager) {
-        case 'yarn':
-          doneMessage += '\n  yarn'
-          doneMessage += '\n  yarn dev'
-          break
-        default:
-          doneMessage += `\n  ${this.pkgManager} install`
-          doneMessage += `\n  ${this.pkgManager} run dev`
-          break
-      }
+      doneMessage += `\n  ${this.pkgManager} install`
+      doneMessage += `\n  ${this.pkgManager} run dev`
     }
 
     if (this.addSubfolders) {

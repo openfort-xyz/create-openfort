@@ -8,8 +8,6 @@ A CLI tool for scaffolding new Openfort projects with best practices and modern 
 pnpm create openfort
 # or
 npm create openfort
-# or
-yarn create openfort
 ```
 
 ## Development

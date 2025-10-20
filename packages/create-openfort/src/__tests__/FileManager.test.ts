@@ -445,18 +445,6 @@ VITE_SHIELD_PUBLISHABLE_KEY=`
       expect(prompts.outro).toHaveBeenCalledWith(expect.stringContaining('npm run dev'))
     })
 
-    it('should generate correct outro message for yarn', () => {
-      fileManager.root = '/test/my-project'
-      fileManager.cwd = '/test'
-      fileManager.pkgManager = 'yarn'
-      fileManager.addSubfolders = false
-
-      fileManager.outro()
-
-      expect(prompts.outro).toHaveBeenCalledWith(expect.stringContaining('yarn'))
-      expect(prompts.outro).toHaveBeenCalledWith(expect.stringContaining('yarn dev'))
-    })
-
     it('should include cd command when root !== cwd', () => {
       fileManager.root = '/test/my-project'
       fileManager.cwd = '/test'
