@@ -57,7 +57,8 @@
       "test-project/**"
     ],
     "ignoreBinaries": [
-      "only-allow"
+      "only-allow",
+      "simple-git-hooks"
     ],
     "ignoreDependencies": [
       "rimraf",
@@ -74,6 +75,10 @@
       "packages/create-openfort": {
         "entry": [
           "src/index.ts!"
+        ],
+        "project": [
+          "src/**/*.ts",
+          "!src/__tests__/**"
         ],
         "ignore": [
           "src/version.ts",
