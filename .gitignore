@@ -3,10 +3,6 @@ node_modules
 .pnpm-store
 pnpm-debug.log*
 
-# dependencies
-/.pnp
-.pnp.js
-
 # testing
 /coverage
 
