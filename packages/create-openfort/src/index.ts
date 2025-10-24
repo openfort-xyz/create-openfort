@@ -350,7 +350,7 @@ ${JSON.stringify(body, null, 2)}
     const shieldSecretResult = await prompts.text({
       message: 'Shield Secret:',
       placeholder: 'Your Shield Secret',
-      validate: (value) => validateInput(value, uuidV4Regex, 'Shield Secret Key')
+      validate: () => undefined
     })
     if (prompts.isCancel(shieldSecretResult)) throw cancel()
     return shieldSecretResult
